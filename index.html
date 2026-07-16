@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)file:///Users/lap13745/Downloads/quan-ly-phat_1.html -->
+<html lang="vi"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản Lý Tiền Phạt Nhóm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1f2e;
+    --surface3: #222840;
+    --border: #2a3150;
+    --accent: #f0a500;
+    --accent2: #e05c2a;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --text: #e8eaf0;
+    --text2: #8892b0;
+    --text3: #4a5580;
+    --font: 'Be Vietnam Pro', sans-serif;
+    --mono: 'Space Mono', monospace;
+    --radius: 12px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .sidebar-logo p {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text2);
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(240,165,0,0.15); color: var(--accent); }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .total-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .total-badge .label { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .total-badge .amount { font-family: var(--mono); font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title { font-size: 18px; font-weight: 700; }
+  .topbar-actions { display: flex; gap: 10px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #f5b800; transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--surface3); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+  .btn-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .btn-green:hover { background: rgba(34,197,94,0.25); }
+
+  /* CONTENT */
+  .content { padding: 28px; flex: 1; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.08;
+    transform: translate(20px, -20px);
+  }
+
+  .stat-card.yellow::before { background: var(--accent); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.blue::before { background: var(--blue); }
+
+  .stat-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .stat-value { font-family: var(--mono); font-size: 22px; font-weight: 700; }
+  .stat-card.yellow .stat-value { color: var(--accent); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-icon { font-size: 24px; margin-bottom: 8px; }
+
+  /* TABLE */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title { font-size: 15px; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--surface2); }
+  th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 13px 16px; font-size: 13.5px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .badge-unpaid { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-paid { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-partial { background: rgba(240,165,0,0.15); color: var(--accent); }
+
+  .amount-text { font-family: var(--mono); font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 480px;
+    max-width: 95vw;
+    box-shadow: var(--shadow);
+    animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 20px; line-height: 1; }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* FORM */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12.5px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
+  .form-control {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13.5px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .form-control:focus { border-color: var(--accent); }
+  select.form-control { cursor: pointer; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* MEMBER AVATAR */
+  .member-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .member-info { display: flex; align-items: center; gap: 10px; }
+  .member-name { font-weight: 600; font-size: 13.5px; }
+  .member-sub { font-size: 11.5px; color: var(--text2); }
+
+  /* EXPORT SECTION */
+  .month-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+  }
+
+  /* EXPORT PREVIEW */
+  #export-preview {
+    background: #fff;
+    color: #1a1a2e;
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-top: 20px;
+    font-family: var(--font);
+    max-width: 700px;
+  }
+
+  .export-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1a1a2e;
+  }
+
+  .export-title h1 { font-size: 22px; font-weight: 800; color: #1a1a2e; }
+  .export-title p { font-size: 13px; color: #666; margin-top: 4px; }
+  .export-title .month-tag {
+    display: inline-block;
+    background: #f0a500;
+    color: #000;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 6px;
+  }
+
+  .export-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .export-stat {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .export-stat .val { font-size: 18px; font-weight: 800; font-family: var(--mono); }
+  .export-stat .lbl { font-size: 11px; color: #666; margin-top: 2px; }
+
+  .export-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  .export-table th { background: #1a1a2e; color: #fff; padding: 10px 12px; text-align: left; font-size: 12px; }
+  .export-table td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+  .export-table tr:last-child td { border-bottom: none; }
+  .export-table tr:nth-child(even) td { background: #f9f9f9; }
+
+  .export-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding-top: 16px;
+    border-top: 2px solid #1a1a2e;
+  }
+
+  .qr-section { text-align: center; }
+  .qr-section #qr-code { margin: 0 auto 8px; }
+  .qr-section .qr-label { font-size: 11px; color: #666; }
+  .qr-section .qr-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+
+  .bank-info { flex: 1; }
+  .bank-info h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .bank-row { display: flex; margin-bottom: 5px; font-size: 12.5px; }
+  .bank-row .key { color: #666; width: 100px; flex-shrink: 0; }
+  .bank-row .val { font-weight: 600; }
+  .bank-row .val.amount { color: #e05c2a; font-family: var(--mono); font-size: 14px; }
+
+  /* MEMBERS PAGE */
+  .members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .member-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .member-card:hover { border-color: var(--accent); }
+
+  .member-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+
+  .member-card-avatar {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .member-card-name { font-size: 15px; font-weight: 700; }
+  .member-card-role { font-size: 12px; color: var(--text2); }
+
+  .member-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .member-stat {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+
+  .member-stat .v { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .member-stat .l { font-size: 10.5px; color: var(--text2); margin-top: 1px; }
+
+  .member-card-actions { display: flex; gap: 6px; margin-top: 12px; }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow);
+    animation: toastIn 0.3s ease;
+    min-width: 240px;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text2);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty-state p { font-size: 13.5px; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar .form-control { width: auto; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* REASON TAGS */
+  .reason-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    background: rgba(168,85,247,0.1);
+    color: var(--purple);
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .stats-grid { grid-template-columns: repeat(2,1fr); }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚖️</div>
+    <h2>Quản Lý Phạt</h2>
+    <p>Team Fine Manager</p>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="switchPage(&#39;dashboard&#39;)">
+      <span class="nav-icon">📊</span> Tổng quan
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;fines&#39;)">
+      <span class="nav-icon">💸</span> Danh sách phạt
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;members&#39;)">
+      <span class="nav-icon">👥</span> Thành viên
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;spending&#39;)">
+      <span class="nav-icon">🛒</span> Phân chi tiền
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;stats&#39;)">
+      <span class="nav-icon">📈</span> Thống kê thu chi
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;export&#39;)">
+      <span class="nav-icon">📄</span> Xuất báo cáo
+    </button>
+    <button class="nav-item" onclick="switchPage(&#39;settings&#39;)">
+      <span class="nav-icon">⚙️</span> Cài đặt
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="total-badge">
+      <div class="label">Tổng tiền chưa đóng</div>
+      <div class="amount" id="sidebar-total">0đ</div>
+    </div>
+    <div style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+      <div style="font-size:11px;color:var(--text2);font-weight:500">Số dư quỹ</div>
+      <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:2px" id="sidebar-balance">0đ</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">📊 Tổng quan</div>
+    <div class="topbar-actions">
+      <button class="btn btn-secondary" onclick="openModal(&#39;fine-modal&#39;)">+ Thêm phạt</button>
+      <button class="btn btn-primary" onclick="openModal(&#39;member-modal&#39;)">+ Thêm thành viên</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card yellow">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Tổng tiền phạt</div>
+          <div class="stat-value" id="stat-total">1.100.000đ</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">❌</div>
+          <div class="stat-label">Chưa đóng</div>
+          <div class="stat-value" id="stat-unpaid">0đ</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Đã đóng</div>
+          <div class="stat-value" id="stat-paid">1.100.000đ</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">👤</div>
+          <div class="stat-label">Số thành viên</div>
+          <div class="stat-value" id="stat-members">11</div>
+        </div>
+      </div>
+
+      <!-- TỔNG TIỀN: ĐÃ THU / CHƯA THU / TỔNG CỘNG -->
+      <div class="card" id="collection-summary" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-title">💵 Tổng tiền thu phạt</div>
+        </div>
+        <div style="padding:20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;text-align:center;">
+            <div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">✅ Đã thu</div>
+              <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green);" id="sum-paid">0đ</div>
+            </div>
+            <div style="border-left:1px solid var(--border);border-right:1px solid var(--border);">
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">❌ Chưa thu</div>
+              <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--red);" id="sum-unpaid">0đ</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">💰 Tổng cộng</div>
+              <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--accent);" id="sum-total">0đ</div>
+            </div>
+          </div>
+          <div style="margin-top:18px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;">
+              <span>Tỷ lệ đã thu</span>
+              <span id="sum-percent" style="color:var(--green);font-weight:600;">0%</span>
+            </div>
+            <div style="height:10px;background:var(--surface3);border-radius:6px;overflow:hidden;">
+              <div id="sum-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--green),#16a34a);border-radius:6px;transition:width .4s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔥 Vi phạm gần đây</div>
+          <button class="btn btn-secondary btn-sm" onclick="switchPage(&#39;fines&#39;)">Xem tất cả</button>
+        </div>
+        <table id="recent-table">
+          <thead>
+            <tr>
+              <th>Thành viên</th>
+              <th>Lý do</th>
+              <th>Số tiền</th>
+              <th>Ngày</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="recent-tbody"><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div><div class="member-name">TramLTM</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text" style="color:var(--green)">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">23/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div><div class="member-name">TramLTM</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Tiền tài trợ</span></td>
+      <td><span class="amount-text" style="color:var(--green)">550.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">23/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#8b5cf620;border:2px solid #8b5cf640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#8b5cf6;flex-shrink:0">H</div><div><div class="member-name">HaiLT5</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">chưa kéo task</span></td>
+      <td><span class="amount-text" style="color:var(--green)">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">21/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div><div class="member-name">TramLTM</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text" style="color:var(--green)">150.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">20/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#84cc1620;border:2px solid #84cc1640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#84cc16;flex-shrink:0">D</div><div><div class="member-name">DangPHH</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text" style="color:var(--green)">100.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#14b8a620;border:2px solid #14b8a640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#14b8a6;flex-shrink:0">K</div><div><div class="member-name">KietPT2</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Chưa kéo task</span></td>
+      <td><span class="amount-text" style="color:var(--green)">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#f0a50020;border:2px solid #f0a50040;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#f0a500;flex-shrink:0">A</div><div><div class="member-name">AnhTVH</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text" style="color:var(--green)">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">3/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#8b5cf620;border:2px solid #8b5cf640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#8b5cf6;flex-shrink:0">H</div><div><div class="member-name">HaiLT5</div><div style="font-size:11px;color:var(--text2)">Thành viên</div></div></div></td>
+      <td><span class="reason-tag">chưa kéo task</span></td>
+      <td><span class="amount-text" style="color:var(--green)">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/3/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINES PAGE -->
+    <div class="page" id="page-fines">
+      <div class="filter-bar">
+        <select class="form-control" id="filter-member" onchange="renderFines()"><option value="">👤 Tất cả thành viên</option><option value="1">AnhTVH</option><option value="2">ThinhTH2</option><option value="3">KhiemVT</option><option value="4">NhueDC</option><option value="5">TriNT</option><option value="6">TramLTM</option><option value="7">NamNTH3</option><option value="8">MinhLN9</option><option value="9">KietPT2</option><option value="10">HaiLT5</option><option value="11">DangPHH</option></select>
+        <select class="form-control" id="filter-status" onchange="renderFines()">
+          <option value="">📋 Tất cả trạng thái</option>
+          <option value="unpaid">Chưa đóng</option>
+          <option value="paid">Đã đóng</option>
+        </select>
+        <select class="form-control" id="filter-month" onchange="renderFines()"><option value="">📅 Tất cả tháng</option><option value="2026-04">Tháng 04/2026</option><option value="2026-03">Tháng 03/2026</option></select>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💸 Danh sách vi phạm</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal(&#39;fine-modal&#39;)">+ Thêm phạt</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Thành viên</th>
+              <th>Lý do vi phạm</th>
+              <th>Số tiền</th>
+              <th>Ngày vi phạm</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="fines-tbody"><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div class="member-name">TramLTM</div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">23/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(8)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(8)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div class="member-name">TramLTM</div></div></td>
+      <td><span class="reason-tag">Tiền tài trợ</span></td>
+      <td><span class="amount-text">550.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">23/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(10)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(10)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#8b5cf620;border:2px solid #8b5cf640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#8b5cf6;flex-shrink:0">H</div><div class="member-name">HaiLT5</div></div></td>
+      <td><span class="reason-tag">chưa kéo task</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">21/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(7)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(7)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div><div class="member-name">TramLTM</div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text">150.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">20/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(4)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(4)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#84cc1620;border:2px solid #84cc1640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#84cc16;flex-shrink:0">D</div><div class="member-name">DangPHH</div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text">100.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(3)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(3)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#14b8a620;border:2px solid #14b8a640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#14b8a6;flex-shrink:0">K</div><div class="member-name">KietPT2</div></div></td>
+      <td><span class="reason-tag">Chưa kéo task</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(6)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(6)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#f0a50020;border:2px solid #f0a50040;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#f0a500;flex-shrink:0">A</div><div class="member-name">AnhTVH</div></div></td>
+      <td><span class="reason-tag">Đi trễ</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">3/4/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(1)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(1)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#8b5cf620;border:2px solid #8b5cf640;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#8b5cf6;flex-shrink:0">H</div><div class="member-name">HaiLT5</div></div></td>
+      <td><span class="reason-tag">chưa kéo task</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">17/3/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(5)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(5)">🗑</button>
+        </div>
+      </td>
+    </tr><tr>
+      <td><div class="member-info"><div style="width:32px;height:32px;border-radius:8px;background:#a855f720;border:2px solid #a855f740;display:flex;align-items:center;justify-content:center;font-size:11.2px;font-weight:700;color:#a855f7;flex-shrink:0">N</div><div class="member-name">NhueDC</div></div></td>
+      <td><span class="reason-tag">không kéo status task</span></td>
+      <td><span class="amount-text">50.000đ</span></td>
+      <td style="color:var(--text2);font-size:12.5px">12/3/2026</td>
+      <td><span class="badge badge-paid">✅ Đã đóng</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="togglePaid(2)">↩ Hoàn lại</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(2)">🗑</button>
+        </div>
+      </td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MEMBERS PAGE -->
+    <div class="page" id="page-members">
+      <div class="members-grid" id="members-grid"><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#f0a50020;border:2px solid #f0a50040;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#f0a500;flex-shrink:0">A</div>
+        <div>
+          <div class="member-card-name">AnhTVH</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">1</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(1)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(1)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#3b82f620;border:2px solid #3b82f640;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#3b82f6;flex-shrink:0">T</div>
+        <div>
+          <div class="member-card-name">ThinhTH2</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">0</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(2)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(2)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#22c55e20;border:2px solid #22c55e40;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#22c55e;flex-shrink:0">K</div>
+        <div>
+          <div class="member-card-name">KhiemVT</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">0</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(3)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(3)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#a855f720;border:2px solid #a855f740;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#a855f7;flex-shrink:0">N</div>
+        <div>
+          <div class="member-card-name">NhueDC</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">1</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(4)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(4)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#ef444420;border:2px solid #ef444440;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#ef4444;flex-shrink:0">T</div>
+        <div>
+          <div class="member-card-name">TriNT</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">0</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(5)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(5)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#06b6d420;border:2px solid #06b6d440;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#06b6d4;flex-shrink:0">T</div>
+        <div>
+          <div class="member-card-name">TramLTM</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">3</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(6)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(6)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#f9731620;border:2px solid #f9731640;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#f97316;flex-shrink:0">N</div>
+        <div>
+          <div class="member-card-name">NamNTH3</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">0</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(7)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(7)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#ec489920;border:2px solid #ec489940;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#ec4899;flex-shrink:0">M</div>
+        <div>
+          <div class="member-card-name">MinhLN9</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">0</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(8)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(8)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#14b8a620;border:2px solid #14b8a640;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#14b8a6;flex-shrink:0">K</div>
+        <div>
+          <div class="member-card-name">KietPT2</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">1</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(9)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(9)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#8b5cf620;border:2px solid #8b5cf640;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#8b5cf6;flex-shrink:0">H</div>
+        <div>
+          <div class="member-card-name">HaiLT5</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">2</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(10)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(10)">🗑</button>
+      </div>
+    </div><div class="member-card">
+      <div class="member-card-top">
+        <div style="width:48px;height:48px;border-radius:12px;background:#84cc1620;border:2px solid #84cc1640;display:flex;align-items:center;justify-content:center;font-size:16.799999999999997px;font-weight:700;color:#84cc16;flex-shrink:0">D</div>
+        <div>
+          <div class="member-card-name">DangPHH</div>
+          <div class="member-card-role">Thành viên</div>
+          
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">1</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">0đ</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(11)">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(11)">🗑</button>
+      </div>
+    </div></div>
+    </div>
+
+    <!-- EXPORT PAGE -->
+    <div class="page" id="page-export">
+      <div class="month-selector">
+        <span style="font-weight:600;font-size:14px;">📅 Chọn tháng xuất báo cáo:</span>
+        <select class="form-control" id="export-month-select" onchange="renderExport()" style="width:160px;"><option value="2026-04">Tháng 04/2026</option><option value="2026-03">Tháng 03/2026</option></select>
+        <button class="btn btn-primary" onclick="downloadExport()">⬇️ Tải xuống ảnh</button>
+      </div>
+      <div id="export-preview">
+        <div class="export-header">
+          <div class="export-title">
+            <h1>⚖️ BÁO CÁO TIỀN PHẠT</h1>
+            <p id="exp-group-name">Team của tôi</p>
+            <div class="month-tag" id="exp-month-tag">Tháng 04/2026</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#666;">Ngày xuất</div>
+            <div style="font-weight:700;font-size:14px;" id="exp-date">9/6/2026</div>
+          </div>
+        </div>
+
+        <div class="export-summary">
+          <div class="export-stat">
+            <div class="val" id="exp-total" style="color:#e05c2a;">1.000.000đ</div>
+            <div class="lbl">Tổng phạt tháng</div>
+          </div>
+          <div class="export-stat">
+            <div class="val" id="exp-paid" style="color:#22c55e;">1.000.000đ</div>
+            <div class="lbl">Đã đóng</div>
+          </div>
+          <div class="export-stat">
+            <div class="val" id="exp-unpaid" style="color:#ef4444;">0đ</div>
+            <div class="lbl">Còn lại</div>
+          </div>
+        </div>
+
+        <table class="export-table" id="exp-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Thành viên</th>
+              <th>Lý do</th>
+              <th>Số tiền</th>
+              <th>Ngày</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="exp-tbody"><tr>
+        <td>1</td>
+        <td>AnhTVH</td>
+        <td>Đi trễ</td>
+        <td style="font-family:monospace;font-weight:700">50.000đ</td>
+        <td>3/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>2</td>
+        <td>DangPHH</td>
+        <td>Đi trễ</td>
+        <td style="font-family:monospace;font-weight:700">100.000đ</td>
+        <td>17/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>3</td>
+        <td>KietPT2</td>
+        <td>Chưa kéo task</td>
+        <td style="font-family:monospace;font-weight:700">50.000đ</td>
+        <td>17/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>4</td>
+        <td>TramLTM</td>
+        <td>Đi trễ</td>
+        <td style="font-family:monospace;font-weight:700">150.000đ</td>
+        <td>20/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>5</td>
+        <td>HaiLT5</td>
+        <td>chưa kéo task</td>
+        <td style="font-family:monospace;font-weight:700">50.000đ</td>
+        <td>21/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>6</td>
+        <td>TramLTM</td>
+        <td>Đi trễ</td>
+        <td style="font-family:monospace;font-weight:700">50.000đ</td>
+        <td>23/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr><tr>
+        <td>7</td>
+        <td>TramLTM</td>
+        <td>Tiền tài trợ</td>
+        <td style="font-family:monospace;font-weight:700">550.000đ</td>
+        <td>23/4/2026</td>
+        <td style="color:#22c55e;font-weight:600">✅ Đã đóng</td>
+      </tr></tbody>
+        </table>
+
+        <div class="export-footer">
+          <div class="qr-section">
+            <div class="qr-title">📱 Quét QR để chuyển khoản</div>
+            <div id="qr-code"><div style="width:130px;height:130px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;color:#666;text-align:center;padding:8px">Cài đặt tài khoản để tạo QR</div></div>
+            <div class="qr-label" id="qr-bank-label">VCB</div>
+          </div>
+          <div class="bank-info">
+            <h3>💳 Thông tin chuyển khoản</h3>
+            <div class="bank-row"><span class="key">Ngân hàng:</span><span class="val" id="bi-bank">⚠️ Chưa cài đặt</span></div>
+            <div class="bank-row"><span class="key">Số TK:</span><span class="val" id="bi-acc">Vào Cài đặt để thêm TK</span></div>
+            <div class="bank-row"><span class="key">Chủ TK:</span><span class="val" id="bi-name">--</span></div>
+            <div class="bank-row"><span class="key">Nội dung:</span><span class="val" id="bi-content">Dong tien phat nhom T04/2026</span></div>
+            <div class="bank-row"><span class="key">Tổng cần đóng:</span><span class="val amount" id="bi-total">0đ</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPENDING PAGE -->
+    <div class="page" id="page-spending">
+      <div class="filter-bar">
+        <select class="form-control" id="filter-spending-month" onchange="renderSpending()" style="width:180px;">
+          <option value="">📅 Tất cả tháng</option>
+        </select>
+        <select class="form-control" id="filter-spending-cat" onchange="renderSpending()" style="width:180px;">
+          <option value="">🏷️ Tất cả danh mục</option>
+          <option value="ăn uống">🍔 Ăn uống</option>
+          <option value="đi lại">🚗 Đi lại</option>
+          <option value="mua sắm">🛍️ Mua sắm</option>
+          <option value="quà tặng">🎁 Quà tặng</option>
+          <option value="sự kiện">🎉 Sự kiện</option>
+          <option value="khác">📦 Khác</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🛒 Danh sách chi tiêu</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('spending-modal')">+ Thêm chi</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nội dung</th>
+              <th>Danh mục</th>
+              <th>Số tiền</th>
+              <th>Ngày chi</th>
+              <th>Ghi chú</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="spending-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STATS PAGE -->
+    <div class="page" id="page-stats">
+      <div class="filter-bar">
+        <select class="form-control" id="filter-stats-month" onchange="renderStats()" style="width:200px;">
+          <option value="">📅 Tất cả (tổng hợp)</option>
+        </select>
+      </div>
+      <div class="stats-grid" id="stats-summary-grid">
+        <div class="stat-card yellow">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Tổng số tiền (đã + chưa đóng)</div>
+          <div class="stat-value" id="stats-total">0đ</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Số tiền đã đóng</div>
+          <div class="stat-value" id="stats-income">0đ</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">❌</div>
+          <div class="stat-label">Số tiền chưa đóng</div>
+          <div class="stat-value" id="stats-pending">0đ</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">📤</div>
+          <div class="stat-label">Số tiền đã chi</div>
+          <div class="stat-value" id="stats-expense">0đ</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">💵</div>
+          <div class="stat-label">Còn lại (đã đóng − đã chi)</div>
+          <div class="stat-value" id="stats-balance">0đ</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <!-- Bar chart thu chi theo tháng -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Thu - Chi theo tháng</div></div>
+          <div style="padding:20px;">
+            <div id="bar-chart-container" style="position:relative;height:220px;"></div>
+          </div>
+        </div>
+        <!-- Chi theo danh mục -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏷️ Chi theo danh mục</div></div>
+          <div style="padding:20px;" id="cat-chart-container"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📥 Chi tiết thu (tiền phạt đã đóng)</div></div>
+          <table>
+            <thead><tr><th>Tháng</th><th>Số lần</th><th>Tổng thu</th></tr></thead>
+            <tbody id="stats-income-tbody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📤 Chi tiết chi tiêu</div></div>
+          <table>
+            <thead><tr><th>Tháng</th><th>Khoản</th><th>Tổng chi</th></tr></thead>
+            <tbody id="stats-expense-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page" id="page-settings">
+      <div class="card" style="max-width:560px;">
+        <div class="card-header"><div class="card-title">⚙️ Cài đặt nhóm &amp; Tài khoản nhận tiền</div></div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Tên nhóm</label>
+            <input class="form-control" id="setting-group" placeholder="VD: Team Alpha 2024" value="Team của tôi">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngân hàng nhận tiền</label>
+            <select class="form-control" id="setting-bank">
+              <option value="VCB">Vietcombank (VCB)</option>
+              <option value="TCB">Techcombank (TCB)</option>
+              <option value="MB">MB Bank</option>
+              <option value="VPB">VPBank</option>
+              <option value="ACB">ACB Bank</option>
+              <option value="BIDV">BIDV</option>
+              <option value="VTB">Vietinbank</option>
+              <option value="TPB">TPBank</option>
+              <option value="STB">Sacombank</option>
+              <option value="MSB">MSB Bank</option>
+              <option value="SHB">SHB Bank</option>
+              <option value="OCB">OCB Bank</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Số tài khoản</label>
+              <input class="form-control" id="setting-account" placeholder="VD: 1234567890">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tên chủ tài khoản</label>
+              <input class="form-control" id="setting-accname" placeholder="VD: NGUYEN VAN A">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nội dung chuyển khoản mặc định</label>
+            <input class="form-control" id="setting-content" placeholder="VD: Team Alpha dong tien phat thang" value="Dong tien phat nhom">
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu cài đặt</button>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:560px;margin-top:20px;">
+        <div class="card-header"><div class="card-title">🗄️ Quản lý dữ liệu</div></div>
+        <div class="modal-body">
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
+            Dữ liệu được lưu trên trình duyệt này. Hãy sao lưu định kỳ để tránh mất dữ liệu khi xóa cache hoặc đổi thiết bị.
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <button class="btn btn-green" onclick="exportData()">⬇️ Sao lưu (tải file .json)</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⬆️ Khôi phục từ file</button>
+            <button class="btn btn-danger" onclick="resetAllData()">🗑️ Xóa toàn bộ dữ liệu</button>
+          </div>
+          <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINE MODAL -->
+<div class="modal-overlay" id="fine-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">💸 Thêm vi phạm mới</div>
+      <button class="modal-close" onclick="closeModal(&#39;fine-modal&#39;)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Thành viên vi phạm *</label>
+        <select class="form-control" id="fine-member"><option value="">-- Chọn thành viên --</option><option value="1">AnhTVH</option><option value="2">ThinhTH2</option><option value="3">KhiemVT</option><option value="4">NhueDC</option><option value="5">TriNT</option><option value="6">TramLTM</option><option value="7">NamNTH3</option><option value="8">MinhLN9</option><option value="9">KietPT2</option><option value="10">HaiLT5</option><option value="11">DangPHH</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lý do vi phạm *</label>
+        <input class="form-control" id="fine-reason" placeholder="VD: Đi trễ họp, Không nộp báo cáo...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Số tiền phạt (đ) *</label>
+          <input class="form-control" id="fine-amount" type="number" placeholder="VD: 50000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ngày vi phạm *</label>
+          <input class="form-control" id="fine-date" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ghi chú</label>
+        <input class="form-control" id="fine-note" placeholder="Ghi chú thêm (không bắt buộc)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trạng thái</label>
+        <select class="form-control" id="fine-status">
+          <option value="unpaid">Chưa đóng</option>
+          <option value="paid">Đã đóng</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;fine-modal&#39;)">Huỷ</button>
+      <button class="btn btn-primary" onclick="addFine()">✓ Thêm vi phạm</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER MODAL -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Thêm thành viên mới</div>
+      <button class="modal-close" onclick="closeModal(&#39;member-modal&#39;)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tên thành viên *</label>
+          <input class="form-control" id="member-name" placeholder="VD: Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vai trò</label>
+          <input class="form-control" id="member-role" placeholder="VD: Trưởng nhóm, Dev...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Số điện thoại</label>
+        <input class="form-control" id="member-phone" placeholder="VD: 0901234567">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal(&#39;member-modal&#39;)">Huỷ</button>
+      <button class="btn btn-primary" onclick="addMember()">✓ Thêm thành viên</button>
+    </div>
+  </div>
+</div>
+
+<!-- SPENDING MODAL -->
+<div class="modal-overlay" id="spending-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🛒 Thêm khoản chi mới</div>
+      <button class="modal-close" onclick="closeModal('spending-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nội dung chi *</label>
+        <input class="form-control" id="spend-desc" placeholder="VD: Ăn trưa team, Quà sinh nhật...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Danh mục</label>
+          <select class="form-control" id="spend-cat">
+            <option value="ăn uống">🍔 Ăn uống</option>
+            <option value="đi lại">🚗 Đi lại</option>
+            <option value="mua sắm">🛍️ Mua sắm</option>
+            <option value="quà tặng">🎁 Quà tặng</option>
+            <option value="sự kiện">🎉 Sự kiện</option>
+            <option value="khác">📦 Khác</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số tiền (đ) *</label>
+          <input class="form-control" id="spend-amount" type="number" placeholder="VD: 200000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ngày chi *</label>
+          <input class="form-control" id="spend-date" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ghi chú</label>
+          <input class="form-control" id="spend-note" placeholder="(không bắt buộc)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('spending-modal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="addSpending()">✓ Thêm chi</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ─── STATE ──────────────────────────────────
+let state = JSON.parse(localStorage.getItem('fineManagerState') || 'null') || {
+  members: [
+    { id: 1,  name: 'AnhTVH',   role: 'Thành viên', phone: '', color: '#f0a500' },
+    { id: 2,  name: 'ThinhTH2', role: 'Thành viên', phone: '', color: '#3b82f6' },
+    { id: 3,  name: 'KhiemVT',  role: 'Thành viên', phone: '', color: '#22c55e' },
+    { id: 4,  name: 'NhueDC',   role: 'Thành viên', phone: '', color: '#a855f7' },
+    { id: 5,  name: 'TriNT',    role: 'Thành viên', phone: '', color: '#ef4444' },
+    { id: 6,  name: 'TramLTM',  role: 'Thành viên', phone: '', color: '#06b6d4' },
+    { id: 7,  name: 'NamNTH3',  role: 'Thành viên', phone: '', color: '#f97316' },
+    { id: 8,  name: 'MinhLN9',  role: 'Thành viên', phone: '', color: '#ec4899' },
+    { id: 9,  name: 'KietPT2',  role: 'Thành viên', phone: '', color: '#14b8a6' },
+    { id: 10, name: 'HaiLT5',   role: 'Thành viên', phone: '', color: '#8b5cf6' },
+    { id: 11, name: 'DangPHH',  role: 'Thành viên', phone: '', color: '#84cc16' },
+  ],
+  fines: [],
+  settings: {
+    groupName: 'Team của tôi',
+    bank: 'VCB',
+    account: '',
+    accName: '',
+    content: 'Dong tien phat nhom'
+  },
+  nextMemberId: 12,
+  nextFineId: 1,
+  spendings: [],
+  nextSpendId: 1,
+};
+
+const COLORS = ['#f0a500','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#f97316','#ec4899','#14b8a6','#8b5cf6'];
+
+function save() {
+  localStorage.setItem('fineManagerState', JSON.stringify(state));
+}
+
+// ─── PAGE NAVIGATION ─────────────────────────
+const pageTitles = {
+  dashboard: '📊 Tổng quan',
+  fines: '💸 Danh sách phạt',
+  members: '👥 Thành viên',
+  spending: '🛒 Phân chi tiền',
+  stats: '📈 Thống kê thu chi',
+  export: '📄 Xuất báo cáo',
+  settings: '⚙️ Cài đặt'
+};
+
+const pageOrder = ['dashboard','fines','members','spending','stats','export','settings'];
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = pageOrder.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name];
+  renderPage(name);
+}
+
+function renderPage(name) {
+  if (name === 'dashboard') renderDashboard();
+  else if (name === 'fines') renderFines();
+  else if (name === 'members') renderMembers();
+  else if (name === 'spending') renderSpending();
+  else if (name === 'stats') renderStats();
+  else if (name === 'export') { populateExportMonths(); renderExport(); }
+  else if (name === 'settings') loadSettings();
+}
+
+// ─── HELPERS ─────────────────────────────────
+function fmt(n) {
+  return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
+}
+
+function getMember(id) {
+  return state.members.find(m => m.id === id) || { name: 'Không rõ', color: '#888' };
+}
+
+function getMonths() {
+  const months = new Set();
+  state.fines.forEach(f => {
+    const d = new Date(f.date);
+    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  });
+  return [...months].sort().reverse();
+}
+
+function getInitials(name) {
+  return name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
+}
+
+function avatarHtml(member, size=32, radius=8) {
+  return `<div style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${member.color}20;border:2px solid ${member.color}40;display:flex;align-items:center;justify-content:center;font-size:${size*0.35}px;font-weight:700;color:${member.color};flex-shrink:0">${getInitials(member.name)}</div>`;
+}
+
+// ─── DASHBOARD ────────────────────────────────
+function renderDashboard() {
+  const total = state.fines.reduce((s, f) => s + f.amount, 0);
+  const paid = state.fines.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
+  const unpaid = total - paid;
+
+  document.getElementById('stat-total').textContent = fmt(total);
+  document.getElementById('stat-unpaid').textContent = fmt(unpaid);
+  document.getElementById('stat-paid').textContent = fmt(paid);
+  document.getElementById('stat-members').textContent = state.members.length;
+  document.getElementById('sidebar-total').textContent = fmt(unpaid);
+
+  // Thẻ tổng tiền: đã thu / chưa thu / tổng cộng + tỷ lệ đã thu
+  const collectRate = total > 0 ? Math.round(paid / total * 100) : 0;
+  document.getElementById('sum-paid').textContent = fmt(paid);
+  document.getElementById('sum-unpaid').textContent = fmt(unpaid);
+  document.getElementById('sum-total').textContent = fmt(total);
+  document.getElementById('sum-percent').textContent = collectRate + '%';
+  document.getElementById('sum-bar').style.width = collectRate + '%';
+  const totalExpense = (state.spendings||[]).reduce((s,x)=>s+x.amount,0);
+  const balance = paid - totalExpense;
+  const balEl = document.getElementById('sidebar-balance');
+  balEl.textContent = fmt(balance);
+  balEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const recent = [...state.fines].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,8);
+  const tbody = document.getElementById('recent-tbody');
+  if (recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">📋</div><h3>Chưa có vi phạm nào</h3><p>Nhấn "+ Thêm phạt" để bắt đầu</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = recent.map(f => {
+    const m = getMember(f.memberId);
+    return `<tr>
+      <td><div class="member-info">${avatarHtml(m)}<div><div class="member-name">${m.name}</div><div style="font-size:11px;color:var(--text2)">${m.role||''}</div></div></div></td>
+      <td><span class="reason-tag">${f.reason}</span>${f.note?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${f.note}</div>`:''}</td>
+      <td><span class="amount-text" style="color:${f.status==='paid'?'var(--green)':'var(--red)'}">${fmt(f.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+      <td><span class="badge badge-${f.status}">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── FINES ────────────────────────────────────
+function renderFines() {
+  // populate member filter
+  const fm = document.getElementById('filter-member');
+  fm.innerHTML = '<option value="">👤 Tất cả thành viên</option>' +
+    state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  // populate month filter
+  const fmth = document.getElementById('filter-month');
+  const months = getMonths();
+  fmth.innerHTML = '<option value="">📅 Tất cả tháng</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  // filter
+  let fines = [...state.fines];
+  const memberF = fm.value;
+  const statusF = document.getElementById('filter-status').value;
+  const monthF = fmth.value;
+
+  if (memberF) fines = fines.filter(f => f.memberId == memberF);
+  if (statusF) fines = fines.filter(f => f.status === statusF);
+  if (monthF) fines = fines.filter(f => f.date.startsWith(monthF));
+  fines.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  // fine member select
+  const fms = document.getElementById('fine-member');
+  fms.innerHTML = '<option value="">-- Chọn thành viên --</option>' +
+    state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  const tbody = document.getElementById('fines-tbody');
+  if (fines.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">💸</div><h3>Không có vi phạm</h3></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = fines.map(f => {
+    const m = getMember(f.memberId);
+    return `<tr>
+      <td><div class="member-info">${avatarHtml(m)}<div class="member-name">${m.name}</div></div></td>
+      <td><span class="reason-tag">${f.reason}</span>${f.note?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${f.note}</div>`:''}</td>
+      <td><span class="amount-text">${fmt(f.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+      <td><span class="badge badge-${f.status}">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          ${f.status==='unpaid'?`<button class="btn btn-green btn-sm" onclick="togglePaid(${f.id})">✓ Đã đóng</button>`:`<button class="btn btn-secondary btn-sm" onclick="togglePaid(${f.id})">↩ Hoàn lại</button>`}
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(${f.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function togglePaid(id) {
+  const f = state.fines.find(x => x.id === id);
+  if (f) { f.status = f.status === 'paid' ? 'unpaid' : 'paid'; save(); renderFines(); renderDashboard(); toast('Cập nhật trạng thái thành công!', 'success'); }
+}
+
+function deleteFine(id) {
+  if (!confirm('Xoá vi phạm này?')) return;
+  state.fines = state.fines.filter(x => x.id !== id);
+  save(); renderFines(); renderDashboard(); toast('Đã xoá vi phạm', 'success');
+}
+
+// ─── MEMBERS ─────────────────────────────────
+function renderMembers() {
+  const grid = document.getElementById('members-grid');
+  if (state.members.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">👥</div><h3>Chưa có thành viên</h3><p>Nhấn "+ Thêm thành viên" để bắt đầu</p></div>`;
+    return;
+  }
+  grid.innerHTML = state.members.map(m => {
+    const mFines = state.fines.filter(f => f.memberId === m.id);
+    const total = mFines.reduce((s,f) => s+f.amount, 0);
+    const unpaid = mFines.filter(f => f.status==='unpaid').reduce((s,f) => s+f.amount, 0);
+    const count = mFines.length;
+    return `<div class="member-card">
+      <div class="member-card-top">
+        ${avatarHtml(m, 48, 12)}
+        <div>
+          <div class="member-card-name">${m.name}</div>
+          <div class="member-card-role">${m.role||'Thành viên'}</div>
+          ${m.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📞 ${m.phone}</div>`:''}
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">${count}</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">${fmt(unpaid)}</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(${m.id})">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterByMember(id) {
+  switchPage('fines');
+  setTimeout(() => {
+    document.getElementById('filter-member').value = id;
+    renderFines();
+  }, 100);
+}
+
+function deleteMember(id) {
+  if (!confirm('Xoá thành viên này? Các vi phạm liên quan vẫn được giữ lại.')) return;
+  state.members = state.members.filter(m => m.id !== id);
+  save(); renderMembers(); toast('Đã xoá thành viên', 'success');
+}
+
+// ─── SPENDING ────────────────────────────────
+const CAT_ICONS = { 'ăn uống':'🍔','đi lại':'🚗','mua sắm':'🛍️','quà tặng':'🎁','sự kiện':'🎉','khác':'📦' };
+const CAT_COLORS = { 'ăn uống':'#f97316','đi lại':'#3b82f6','mua sắm':'#ec4899','quà tặng':'#a855f7','sự kiện':'#f0a500','khác':'#8892b0' };
+
+function getSpendMonths() {
+  const months = new Set();
+  (state.spendings||[]).forEach(s => {
+    const d = new Date(s.date);
+    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  });
+  return [...months].sort().reverse();
+}
+
+function renderSpending() {
+  if (!state.spendings) state.spendings = [];
+  // populate months
+  const fmth = document.getElementById('filter-spending-month');
+  const months = getSpendMonths();
+  fmth.innerHTML = '<option value="">📅 Tất cả tháng</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  let items = [...state.spendings];
+  const monthF = fmth.value;
+  const catF = document.getElementById('filter-spending-cat').value;
+  if (monthF) items = items.filter(s => s.date.startsWith(monthF));
+  if (catF) items = items.filter(s => s.cat === catF);
+  items.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  const tbody = document.getElementById('spending-tbody');
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">🛒</div><h3>Chưa có khoản chi nào</h3><p>Nhấn "+ Thêm chi" để ghi nhận chi tiêu từ quỹ</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(s => {
+    const icon = CAT_ICONS[s.cat] || '📦';
+    const color = CAT_COLORS[s.cat] || '#888';
+    return `<tr>
+      <td><span style="font-weight:600">${s.desc}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11.5px;font-weight:600;background:${color}20;color:${color}">${icon} ${s.cat}</span></td>
+      <td><span class="amount-text" style="color:var(--red)">-${fmt(s.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(s.date).toLocaleDateString('vi-VN')}</td>
+      <td style="color:var(--text2);font-size:12px">${s.note||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteSpending(${s.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addSpending() {
+  const desc = document.getElementById('spend-desc').value.trim();
+  const cat = document.getElementById('spend-cat').value;
+  const amount = parseInt(document.getElementById('spend-amount').value);
+  const date = document.getElementById('spend-date').value;
+  const note = document.getElementById('spend-note').value.trim();
+  if (!desc) return toast('Vui lòng nhập nội dung chi!', 'error');
+  if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
+  if (!date) return toast('Vui lòng chọn ngày!', 'error');
+  if (!state.spendings) state.spendings = [];
+  if (!state.nextSpendId) state.nextSpendId = 1;
+  state.spendings.push({ id: state.nextSpendId++, desc, cat, amount, date, note });
+  save();
+  closeModal('spending-modal');
+  document.getElementById('spend-desc').value = '';
+  document.getElementById('spend-amount').value = '';
+  document.getElementById('spend-note').value = '';
+  renderSpending();
+  toast('Đã thêm khoản chi!', 'success');
+}
+
+function deleteSpending(id) {
+  if (!confirm('Xoá khoản chi này?')) return;
+  state.spendings = state.spendings.filter(s => s.id !== id);
+  save(); renderSpending(); toast('Đã xoá khoản chi', 'success');
+}
+
+// ─── STATS ───────────────────────────────────
+function renderStats() {
+  if (!state.spendings) state.spendings = [];
+
+  // populate months (union of fine months + spend months)
+  const allMonths = new Set();
+  state.fines.forEach(f => { const d=new Date(f.date); allMonths.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); });
+  state.spendings.forEach(s => { const d=new Date(s.date); allMonths.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); });
+  const months = [...allMonths].sort().reverse();
+  const fmth = document.getElementById('filter-stats-month');
+  fmth.innerHTML = '<option value="">📅 Tất cả (tổng hợp)</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  const filterMonth = fmth.value;
+  const fines = filterMonth ? state.fines.filter(f => f.date.startsWith(filterMonth)) : state.fines;
+  const spendings = filterMonth ? state.spendings.filter(s => s.date.startsWith(filterMonth)) : state.spendings;
+
+  const totalIncome = fines.filter(f => f.status==='paid').reduce((s,f)=>s+f.amount,0);
+  const totalPending = fines.filter(f => f.status==='unpaid').reduce((s,f)=>s+f.amount,0);
+  const totalAll = totalIncome + totalPending;
+  const totalExpense = spendings.reduce((s,x)=>s+x.amount,0);
+  const balance = totalIncome - totalExpense;
+
+  document.getElementById('stats-total').textContent = fmt(totalAll);
+  document.getElementById('stats-income').textContent = fmt(totalIncome);
+  document.getElementById('stats-pending').textContent = fmt(totalPending);
+  document.getElementById('stats-expense').textContent = fmt(totalExpense);
+  document.getElementById('stats-balance').textContent = fmt(balance);
+  document.getElementById('stats-balance').style.color = balance >= 0 ? 'var(--accent)' : 'var(--red)';
+
+  // Bar chart: thu vs chi by month
+  renderBarChart(months);
+  renderCatChart(spendings);
+
+  // Income detail table
+  const incByMonth = {};
+  fines.filter(f=>f.status==='paid').forEach(f => {
+    const d=new Date(f.date); const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!incByMonth[m]) incByMonth[m]={count:0,total:0};
+    incByMonth[m].count++; incByMonth[m].total+=f.amount;
+  });
+  const incMonths = Object.keys(incByMonth).sort().reverse();
+  document.getElementById('stats-income-tbody').innerHTML = incMonths.length === 0
+    ? `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text2)">Chưa có dữ liệu</td></tr>`
+    : incMonths.map(m => {
+        const [y,mo]=m.split('-');
+        return `<tr><td style="color:var(--text2)">Tháng ${mo}/${y}</td><td>${incByMonth[m].count} lần</td><td class="amount-text" style="color:var(--green)">${fmt(incByMonth[m].total)}</td></tr>`;
+      }).join('');
+
+  // Expense detail table
+  const expByMonth = {};
+  spendings.forEach(s => {
+    const d=new Date(s.date); const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!expByMonth[m]) expByMonth[m]={count:0,total:0};
+    expByMonth[m].count++; expByMonth[m].total+=s.amount;
+  });
+  const expMonths = Object.keys(expByMonth).sort().reverse();
+  document.getElementById('stats-expense-tbody').innerHTML = expMonths.length === 0
+    ? `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text2)">Chưa có khoản chi</td></tr>`
+    : expMonths.map(m => {
+        const [y,mo]=m.split('-');
+        return `<tr><td style="color:var(--text2)">Tháng ${mo}/${y}</td><td>${expByMonth[m].count} khoản</td><td class="amount-text" style="color:var(--red)">-${fmt(expByMonth[m].total)}</td></tr>`;
+      }).join('');
+}
+
+function renderBarChart(months) {
+  const container = document.getElementById('bar-chart-container');
+  if (months.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📊</div><h3>Chưa có dữ liệu</h3></div>`;
+    return;
+  }
+  const display = months.slice(0, 6).reverse();
+  const data = display.map(m => {
+    const inc = state.fines.filter(f => f.status==='paid' && f.date.startsWith(m)).reduce((s,f)=>s+f.amount,0);
+    const exp = (state.spendings||[]).filter(s => s.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
+    return { m, inc, exp };
+  });
+  const maxVal = Math.max(...data.map(d => Math.max(d.inc, d.exp)), 1);
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:8px;height:180px;padding-bottom:28px;position:relative;">
+      ${data.map(d => {
+        const incH = Math.round((d.inc/maxVal)*150);
+        const expH = Math.round((d.exp/maxVal)*150);
+        const [y,mo] = d.m.split('-');
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end;">
+          <div style="display:flex;gap:2px;align-items:flex-end;width:100%;justify-content:center">
+            <div title="Thu: ${fmt(d.inc)}" style="flex:1;max-width:22px;height:${incH}px;background:var(--green);border-radius:3px 3px 0 0;opacity:0.85;min-height:${d.inc>0?2:0}px;cursor:pointer"></div>
+            <div title="Chi: ${fmt(d.exp)}" style="flex:1;max-width:22px;height:${expH}px;background:var(--red);border-radius:3px 3px 0 0;opacity:0.85;min-height:${d.exp>0?2:0}px;cursor:pointer"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px;white-space:nowrap">T${mo}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:16px;margin-top:4px;justify-content:center">
+      <span style="font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>Thu</span>
+      <span style="font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block"></span>Chi</span>
+    </div>`;
+}
+
+function renderCatChart(spendings) {
+  const container = document.getElementById('cat-chart-container');
+  if (spendings.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:24px"><div class="icon">🏷️</div><h3>Chưa có khoản chi</h3></div>`;
+    return;
+  }
+  const bycat = {};
+  spendings.forEach(s => { bycat[s.cat] = (bycat[s.cat]||0) + s.amount; });
+  const total = Object.values(bycat).reduce((a,b)=>a+b,0);
+  const cats = Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
+  container.innerHTML = cats.map(([cat, amt]) => {
+    const pct = Math.round(amt/total*100);
+    const color = CAT_COLORS[cat]||'#888';
+    const icon = CAT_ICONS[cat]||'📦';
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12.5px;font-weight:600">${icon} ${cat}</span>
+        <span style="font-size:12px;font-family:var(--mono);color:${color}">${fmt(amt)} <span style="color:var(--text2);font-size:11px">(${pct}%)</span></span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.5s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── EXPORT ──────────────────────────────────
+function populateExportMonths() {
+  const sel = document.getElementById('export-month-select');
+  const months = getMonths();
+  if (months.length === 0) {
+    const now = new Date();
+    const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    sel.innerHTML = `<option value="${m}">Tháng ${now.getMonth()+1}/${now.getFullYear()}</option>`;
+  } else {
+    sel.innerHTML = months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+  }
+}
+
+function renderExport() {
+  const sel = document.getElementById('export-month-select');
+  const month = sel.value;
+  const [y, mo] = month.split('-');
+  const s = state.settings;
+
+  document.getElementById('exp-group-name').textContent = s.groupName || 'Nhóm của bạn';
+  document.getElementById('exp-month-tag').textContent = `Tháng ${mo}/${y}`;
+  document.getElementById('exp-date').textContent = new Date().toLocaleDateString('vi-VN');
+
+  const fines = state.fines.filter(f => f.date.startsWith(month));
+  const total = fines.reduce((s,f) => s+f.amount, 0);
+  const paid = fines.filter(f => f.status==='paid').reduce((s,f) => s+f.amount, 0);
+  const unpaid = total - paid;
+
+  document.getElementById('exp-total').textContent = fmt(total);
+  document.getElementById('exp-paid').textContent = fmt(paid);
+  document.getElementById('exp-unpaid').textContent = fmt(unpaid);
+
+  const tbody = document.getElementById('exp-tbody');
+  if (fines.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Không có vi phạm trong tháng này</td></tr>`;
+  } else {
+    tbody.innerHTML = fines.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((f,i) => {
+      const m = getMember(f.memberId);
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${m.name}</td>
+        <td>${f.reason}</td>
+        <td style="font-family:monospace;font-weight:700">${fmt(f.amount)}</td>
+        <td>${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+        <td style="color:${f.status==='paid'?'#22c55e':'#ef4444'};font-weight:600">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // bank info
+  document.getElementById('bi-bank').textContent = s.bank || '--';
+  document.getElementById('bi-acc').textContent = s.account || '--';
+  document.getElementById('bi-name').textContent = s.accName || '--';
+  document.getElementById('bi-content').textContent = `${s.content || 'Dong tien phat'} T${mo}/${y}`;
+  document.getElementById('bi-total').textContent = fmt(unpaid);
+  document.getElementById('qr-bank-label').textContent = s.bank || 'Ngân hàng';
+
+  // Generate QR
+  const qrDiv = document.getElementById('qr-code');
+  qrDiv.innerHTML = '';
+
+  // VietQR format
+  let qrData = '';
+  if (s.account && s.bank) {
+    // VietQR EMVCo format
+    const bankMap = {
+      VCB:'970436', TCB:'970407', MB:'970422', VPB:'970432',
+      ACB:'970416', BIDV:'970418', VTB:'970415', TPB:'970423',
+      STB:'970403', MSB:'970426', SHB:'970443', OCB:'970448'
+    };
+    const bankId = bankMap[s.bank] || '970436';
+    const acc = s.account;
+    const content = encodeURIComponent(`${s.content || 'Dong tien phat'} T${mo}/${y}`);
+    const amt = unpaid;
+    qrData = `https://img.vietqr.io/image/${bankId}-${acc}-compact2.png?amount=${amt}&addInfo=${content}&accountName=${encodeURIComponent(s.accName||'')}`;
+
+    // Show as image
+    const img = document.createElement('img');
+    img.src = qrData;
+    img.width = 140; img.height = 140;
+    img.style.borderRadius = '8px';
+    img.onerror = () => generateFallbackQR(qrDiv, qrData);
+    qrDiv.appendChild(img);
+  } else {
+    // Fallback QR with basic info
+    const text = `Tien phat T${mo}/${y}: ${fmt(unpaid)}\nNhom: ${s.groupName||'Team'}`;
+    generateFallbackQR(qrDiv, text);
+    document.getElementById('bi-bank').textContent = '⚠️ Chưa cài đặt';
+    document.getElementById('bi-acc').textContent = 'Vào Cài đặt để thêm TK';
+  }
+}
+
+function generateFallbackQR(container, text) {
+  container.innerHTML = '';
+  try {
+    new QRCode(container, {
+      text: text || 'https://qr.me',
+      width: 130,
+      height: 130,
+      colorDark: '#1a1a2e',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    container.innerHTML = '<div style="width:130px;height:130px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;color:#666;text-align:center;padding:8px">Cài đặt tài khoản để tạo QR</div>';
+  }
+}
+
+function downloadExport() {
+  const el = document.getElementById('export-preview');
+  html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+    const link = document.createElement('a');
+    const sel = document.getElementById('export-month-select');
+    link.download = `bao-cao-phat-${sel.value}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    toast('Đã tải xuống báo cáo!', 'success');
+  }).catch(() => toast('Lỗi khi tải xuống, thử lại!', 'error'));
+}
+
+// ─── SETTINGS ────────────────────────────────
+function loadSettings() {
+  const s = state.settings;
+  document.getElementById('setting-group').value = s.groupName || '';
+  document.getElementById('setting-bank').value = s.bank || 'VCB';
+  document.getElementById('setting-account').value = s.account || '';
+  document.getElementById('setting-accname').value = s.accName || '';
+  document.getElementById('setting-content').value = s.content || '';
+}
+
+function saveSettings() {
+  state.settings = {
+    groupName: document.getElementById('setting-group').value,
+    bank: document.getElementById('setting-bank').value,
+    account: document.getElementById('setting-account').value,
+    accName: document.getElementById('setting-accname').value,
+    content: document.getElementById('setting-content').value,
+  };
+  save(); toast('Đã lưu cài đặt!', 'success');
+}
+
+// ─── QUẢN LÝ DỮ LIỆU (SAO LƯU / KHÔI PHỤC / XÓA) ───
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  link.download = `quan-ly-phat-backup-${stamp}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  toast('Đã tải file sao lưu!', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.members) || !Array.isArray(data.fines)) {
+        throw new Error('invalid');
+      }
+      if (!confirm('Khôi phục sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại. Bạn chắc chắn chứ?')) {
+        event.target.value = '';
+        return;
+      }
+      const merged = Object.assign({ members: [], fines: [], spendings: [], settings: {} }, data);
+      merged.spendings = merged.spendings || [];
+      localStorage.setItem('fineManagerState', JSON.stringify(merged));
+      alert('Khôi phục dữ liệu thành công! Trang sẽ tải lại.');
+      location.reload();
+    } catch (err) {
+      toast('File không hợp lệ, không thể khôi phục!', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData() {
+  if (!confirm('Xóa TOÀN BỘ thành viên, khoản phạt, chi tiêu và cài đặt? Hành động này KHÔNG THỂ hoàn tác.')) return;
+  if (!confirm('Xác nhận lần cuối: xóa sạch mọi dữ liệu?')) return;
+  localStorage.removeItem('fineManagerState');
+  location.reload();
+}
+
+// ─── MODALS ───────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'fine-modal') {
+    document.getElementById('fine-date').value = new Date().toISOString().split('T')[0];
+    const sel = document.getElementById('fine-member');
+    sel.innerHTML = '<option value="">-- Chọn thành viên --</option>' +
+      state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  }
+  if (id === 'spending-modal') {
+    document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── ADD FINE ─────────────────────────────────
+function addFine() {
+  const memberId = parseInt(document.getElementById('fine-member').value);
+  const reason = document.getElementById('fine-reason').value.trim();
+  const amount = parseInt(document.getElementById('fine-amount').value);
+  const date = document.getElementById('fine-date').value;
+  const note = document.getElementById('fine-note').value.trim();
+  const status = document.getElementById('fine-status').value;
+
+  if (!memberId) return toast('Vui lòng chọn thành viên!', 'error');
+  if (!reason) return toast('Vui lòng nhập lý do!', 'error');
+  if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
+  if (!date) return toast('Vui lòng chọn ngày!', 'error');
+
+  state.fines.push({ id: state.nextFineId++, memberId, reason, amount, date, note, status });
+  save();
+  closeModal('fine-modal');
+  document.getElementById('fine-reason').value = '';
+  document.getElementById('fine-amount').value = '';
+  document.getElementById('fine-note').value = '';
+  renderDashboard();
+  toast('Đã thêm vi phạm!', 'success');
+}
+
+// ─── ADD MEMBER ───────────────────────────────
+function addMember() {
+  const name = document.getElementById('member-name').value.trim();
+  const role = document.getElementById('member-role').value.trim();
+  const phone = document.getElementById('member-phone').value.trim();
+
+  if (!name) return toast('Vui lòng nhập tên thành viên!', 'error');
+
+  const color = COLORS[state.members.length % COLORS.length];
+  state.members.push({ id: state.nextMemberId++, name, role, phone, color });
+  save();
+  closeModal('member-modal');
+  document.getElementById('member-name').value = '';
+  document.getElementById('member-role').value = '';
+  document.getElementById('member-phone').value = '';
+  renderDashboard();
+  toast(`Đã thêm ${name}!`, 'success');
+}
+
+// ─── TOAST ────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span> ${msg}`;
+  const c = document.getElementById('toast-container');
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ─── INIT ─────────────────────────────────────
+renderDashboard();
+</script>
+
+
+</body></html>
