@@ -1,0 +1,725 @@
+// ─── STATE ──────────────────────────────────
+let state = JSON.parse(localStorage.getItem('fineManagerState') || 'null') || {
+  members: [
+    { id: 1,  name: 'AnhTVH',   role: 'Thành viên', phone: '', color: '#f0a500' },
+    { id: 2,  name: 'ThinhTH2', role: 'Thành viên', phone: '', color: '#3b82f6' },
+    { id: 3,  name: 'KhiemVT',  role: 'Thành viên', phone: '', color: '#22c55e' },
+    { id: 4,  name: 'NhueDC',   role: 'Thành viên', phone: '', color: '#a855f7' },
+    { id: 5,  name: 'TriNT',    role: 'Thành viên', phone: '', color: '#ef4444' },
+    { id: 6,  name: 'TramLTM',  role: 'Thành viên', phone: '', color: '#06b6d4' },
+    { id: 7,  name: 'NamNTH3',  role: 'Thành viên', phone: '', color: '#f97316' },
+    { id: 8,  name: 'MinhLN9',  role: 'Thành viên', phone: '', color: '#ec4899' },
+    { id: 9,  name: 'KietPT2',  role: 'Thành viên', phone: '', color: '#14b8a6' },
+    { id: 10, name: 'HaiLT5',   role: 'Thành viên', phone: '', color: '#8b5cf6' },
+    { id: 11, name: 'DangPHH',  role: 'Thành viên', phone: '', color: '#84cc16' },
+  ],
+  fines: [
+    { id: 1, memberId: 1,  reason: 'Đi trễ',                amount: 50000,  date: '2026-04-03', note: '', status: 'paid' },
+    { id: 2, memberId: 4,  reason: 'không kéo status task',  amount: 50000,  date: '2026-03-12', note: '', status: 'paid' },
+    { id: 3, memberId: 11, reason: 'Đi trễ',                amount: 100000, date: '2026-04-17', note: '', status: 'paid' },
+    { id: 4, memberId: 6,  reason: 'Đi trễ',                amount: 150000, date: '2026-04-20', note: '', status: 'paid' },
+    { id: 5, memberId: 10, reason: 'chưa kéo task',          amount: 50000,  date: '2026-03-17', note: '', status: 'paid' },
+    { id: 6, memberId: 9,  reason: 'Chưa kéo task',          amount: 50000,  date: '2026-04-17', note: '', status: 'paid' },
+    { id: 7, memberId: 10, reason: 'chưa kéo task',          amount: 50000,  date: '2026-04-21', note: '', status: 'paid' },
+    { id: 8, memberId: 6,  reason: 'Đi trễ',                amount: 50000,  date: '2026-04-23', note: '', status: 'paid' },
+    { id: 9, memberId: 6,  reason: 'Tiền tài trợ',           amount: 550000, date: '2026-04-23', note: '', status: 'paid' },
+  ],
+  settings: {
+    groupName: 'Team của tôi',
+    bank: 'VCB',
+    account: '',
+    accName: '',
+    content: 'Dong tien phat nhom'
+  },
+  nextMemberId: 12,
+  nextFineId: 10,
+  spendings: [],
+  nextSpendId: 1,
+};
+
+const COLORS = ['#f0a500','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#f97316','#ec4899','#14b8a6','#8b5cf6'];
+
+function save() {
+  localStorage.setItem('fineManagerState', JSON.stringify(state));
+}
+
+// ─── PAGE NAVIGATION ─────────────────────────
+const pageTitles = {
+  dashboard: '📊 Tổng quan',
+  fines: '💸 Danh sách phạt',
+  members: '👥 Thành viên',
+  spending: '🛒 Phân chi tiền',
+  stats: '📈 Thống kê thu chi',
+  export: '📄 Xuất báo cáo',
+  settings: '⚙️ Cài đặt'
+};
+
+const pageOrder = ['dashboard','fines','members','spending','stats','export','settings'];
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const idx = pageOrder.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[name];
+  renderPage(name);
+}
+
+function renderPage(name) {
+  if (name === 'dashboard') renderDashboard();
+  else if (name === 'fines') renderFines();
+  else if (name === 'members') renderMembers();
+  else if (name === 'spending') renderSpending();
+  else if (name === 'stats') renderStats();
+  else if (name === 'export') { populateExportMonths(); renderExport(); }
+  else if (name === 'settings') loadSettings();
+}
+
+// ─── HELPERS ─────────────────────────────────
+function fmt(n) {
+  return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
+}
+
+function getMember(id) {
+  return state.members.find(m => m.id === id) || { name: 'Không rõ', color: '#888' };
+}
+
+function getMonths() {
+  const months = new Set();
+  state.fines.forEach(f => {
+    const d = new Date(f.date);
+    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  });
+  return [...months].sort().reverse();
+}
+
+function getInitials(name) {
+  return name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
+}
+
+function avatarHtml(member, size=32, radius=8) {
+  return `<div style="width:${size}px;height:${size}px;border-radius:${radius}px;background:${member.color}20;border:2px solid ${member.color}40;display:flex;align-items:center;justify-content:center;font-size:${size*0.35}px;font-weight:700;color:${member.color};flex-shrink:0">${getInitials(member.name)}</div>`;
+}
+
+// ─── DASHBOARD ────────────────────────────────
+function renderDashboard() {
+  const total = state.fines.reduce((s, f) => s + f.amount, 0);
+  const paid = state.fines.filter(f => f.status === 'paid').reduce((s, f) => s + f.amount, 0);
+  const unpaid = total - paid;
+
+  document.getElementById('stat-total').textContent = fmt(total);
+  document.getElementById('stat-unpaid').textContent = fmt(unpaid);
+  document.getElementById('stat-paid').textContent = fmt(paid);
+  document.getElementById('stat-members').textContent = state.members.length;
+  document.getElementById('sidebar-total').textContent = fmt(unpaid);
+
+  // Thẻ tổng tiền: đã thu / chưa thu / tổng cộng + tỷ lệ đã thu
+  const collectRate = total > 0 ? Math.round(paid / total * 100) : 0;
+  document.getElementById('sum-paid').textContent = fmt(paid);
+  document.getElementById('sum-unpaid').textContent = fmt(unpaid);
+  document.getElementById('sum-total').textContent = fmt(total);
+  document.getElementById('sum-percent').textContent = collectRate + '%';
+  document.getElementById('sum-bar').style.width = collectRate + '%';
+  const totalExpense = (state.spendings||[]).reduce((s,x)=>s+x.amount,0);
+  const balance = paid - totalExpense;
+  const balEl = document.getElementById('sidebar-balance');
+  balEl.textContent = fmt(balance);
+  balEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const recent = [...state.fines].sort((a,b) => new Date(b.date)-new Date(a.date)).slice(0,8);
+  const tbody = document.getElementById('recent-tbody');
+  if (recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">📋</div><h3>Chưa có vi phạm nào</h3><p>Nhấn "+ Thêm phạt" để bắt đầu</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = recent.map(f => {
+    const m = getMember(f.memberId);
+    return `<tr>
+      <td><div class="member-info">${avatarHtml(m)}<div><div class="member-name">${m.name}</div><div style="font-size:11px;color:var(--text2)">${m.role||''}</div></div></div></td>
+      <td><span class="reason-tag">${f.reason}</span>${f.note?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${f.note}</div>`:''}</td>
+      <td><span class="amount-text" style="color:${f.status==='paid'?'var(--green)':'var(--red)'}">${fmt(f.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+      <td><span class="badge badge-${f.status}">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── FINES ────────────────────────────────────
+function renderFines() {
+  // populate member filter
+  const fm = document.getElementById('filter-member');
+  fm.innerHTML = '<option value="">👤 Tất cả thành viên</option>' +
+    state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  // populate month filter
+  const fmth = document.getElementById('filter-month');
+  const months = getMonths();
+  fmth.innerHTML = '<option value="">📅 Tất cả tháng</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  // filter
+  let fines = [...state.fines];
+  const memberF = fm.value;
+  const statusF = document.getElementById('filter-status').value;
+  const monthF = fmth.value;
+
+  if (memberF) fines = fines.filter(f => f.memberId == memberF);
+  if (statusF) fines = fines.filter(f => f.status === statusF);
+  if (monthF) fines = fines.filter(f => f.date.startsWith(monthF));
+  fines.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  // fine member select
+  const fms = document.getElementById('fine-member');
+  fms.innerHTML = '<option value="">-- Chọn thành viên --</option>' +
+    state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  const tbody = document.getElementById('fines-tbody');
+  if (fines.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">💸</div><h3>Không có vi phạm</h3></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = fines.map(f => {
+    const m = getMember(f.memberId);
+    return `<tr>
+      <td><div class="member-info">${avatarHtml(m)}<div class="member-name">${m.name}</div></div></td>
+      <td><span class="reason-tag">${f.reason}</span>${f.note?`<div style="font-size:11px;color:var(--text2);margin-top:3px">${f.note}</div>`:''}</td>
+      <td><span class="amount-text">${fmt(f.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+      <td><span class="badge badge-${f.status}">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</span></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          ${f.status==='unpaid'?`<button class="btn btn-green btn-sm" onclick="togglePaid(${f.id})">✓ Đã đóng</button>`:`<button class="btn btn-secondary btn-sm" onclick="togglePaid(${f.id})">↩ Hoàn lại</button>`}
+          <button class="btn btn-danger btn-sm" onclick="deleteFine(${f.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function togglePaid(id) {
+  const f = state.fines.find(x => x.id === id);
+  if (f) { f.status = f.status === 'paid' ? 'unpaid' : 'paid'; save(); renderFines(); renderDashboard(); toast('Cập nhật trạng thái thành công!', 'success'); }
+}
+
+function deleteFine(id) {
+  if (!confirm('Xoá vi phạm này?')) return;
+  state.fines = state.fines.filter(x => x.id !== id);
+  save(); renderFines(); renderDashboard(); toast('Đã xoá vi phạm', 'success');
+}
+
+// ─── MEMBERS ─────────────────────────────────
+function renderMembers() {
+  const grid = document.getElementById('members-grid');
+  if (state.members.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">👥</div><h3>Chưa có thành viên</h3><p>Nhấn "+ Thêm thành viên" để bắt đầu</p></div>`;
+    return;
+  }
+  grid.innerHTML = state.members.map(m => {
+    const mFines = state.fines.filter(f => f.memberId === m.id);
+    const total = mFines.reduce((s,f) => s+f.amount, 0);
+    const unpaid = mFines.filter(f => f.status==='unpaid').reduce((s,f) => s+f.amount, 0);
+    const count = mFines.length;
+    return `<div class="member-card">
+      <div class="member-card-top">
+        ${avatarHtml(m, 48, 12)}
+        <div>
+          <div class="member-card-name">${m.name}</div>
+          <div class="member-card-role">${m.role||'Thành viên'}</div>
+          ${m.phone?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📞 ${m.phone}</div>`:''}
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="member-stat"><div class="v" style="color:var(--accent)">${count}</div><div class="l">Vi phạm</div></div>
+        <div class="member-stat"><div class="v" style="color:var(--red)">${fmt(unpaid)}</div><div class="l">Chưa đóng</div></div>
+      </div>
+      <div class="member-card-actions">
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="filterByMember(${m.id})">📋 Xem phạt</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterByMember(id) {
+  switchPage('fines');
+  setTimeout(() => {
+    document.getElementById('filter-member').value = id;
+    renderFines();
+  }, 100);
+}
+
+function deleteMember(id) {
+  if (!confirm('Xoá thành viên này? Các vi phạm liên quan vẫn được giữ lại.')) return;
+  state.members = state.members.filter(m => m.id !== id);
+  save(); renderMembers(); toast('Đã xoá thành viên', 'success');
+}
+
+// ─── SPENDING ────────────────────────────────
+const CAT_ICONS = { 'ăn uống':'🍔','đi lại':'🚗','mua sắm':'🛍️','quà tặng':'🎁','sự kiện':'🎉','khác':'📦' };
+const CAT_COLORS = { 'ăn uống':'#f97316','đi lại':'#3b82f6','mua sắm':'#ec4899','quà tặng':'#a855f7','sự kiện':'#f0a500','khác':'#8892b0' };
+
+function getSpendMonths() {
+  const months = new Set();
+  (state.spendings||[]).forEach(s => {
+    const d = new Date(s.date);
+    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  });
+  return [...months].sort().reverse();
+}
+
+function renderSpending() {
+  if (!state.spendings) state.spendings = [];
+  // populate months
+  const fmth = document.getElementById('filter-spending-month');
+  const months = getSpendMonths();
+  fmth.innerHTML = '<option value="">📅 Tất cả tháng</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  let items = [...state.spendings];
+  const monthF = fmth.value;
+  const catF = document.getElementById('filter-spending-cat').value;
+  if (monthF) items = items.filter(s => s.date.startsWith(monthF));
+  if (catF) items = items.filter(s => s.cat === catF);
+  items.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  const tbody = document.getElementById('spending-tbody');
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">🛒</div><h3>Chưa có khoản chi nào</h3><p>Nhấn "+ Thêm chi" để ghi nhận chi tiêu từ quỹ</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map(s => {
+    const icon = CAT_ICONS[s.cat] || '📦';
+    const color = CAT_COLORS[s.cat] || '#888';
+    return `<tr>
+      <td><span style="font-weight:600">${s.desc}</span></td>
+      <td><span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11.5px;font-weight:600;background:${color}20;color:${color}">${icon} ${s.cat}</span></td>
+      <td><span class="amount-text" style="color:var(--red)">-${fmt(s.amount)}</span></td>
+      <td style="color:var(--text2);font-size:12.5px">${new Date(s.date).toLocaleDateString('vi-VN')}</td>
+      <td style="color:var(--text2);font-size:12px">${s.note||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteSpending(${s.id})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addSpending() {
+  const desc = document.getElementById('spend-desc').value.trim();
+  const cat = document.getElementById('spend-cat').value;
+  const amount = parseInt(document.getElementById('spend-amount').value);
+  const date = document.getElementById('spend-date').value;
+  const note = document.getElementById('spend-note').value.trim();
+  if (!desc) return toast('Vui lòng nhập nội dung chi!', 'error');
+  if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
+  if (!date) return toast('Vui lòng chọn ngày!', 'error');
+  if (!state.spendings) state.spendings = [];
+  if (!state.nextSpendId) state.nextSpendId = 1;
+  state.spendings.push({ id: state.nextSpendId++, desc, cat, amount, date, note });
+  save();
+  closeModal('spending-modal');
+  document.getElementById('spend-desc').value = '';
+  document.getElementById('spend-amount').value = '';
+  document.getElementById('spend-note').value = '';
+  renderSpending();
+  toast('Đã thêm khoản chi!', 'success');
+}
+
+function deleteSpending(id) {
+  if (!confirm('Xoá khoản chi này?')) return;
+  state.spendings = state.spendings.filter(s => s.id !== id);
+  save(); renderSpending(); toast('Đã xoá khoản chi', 'success');
+}
+
+// ─── STATS ───────────────────────────────────
+function renderStats() {
+  if (!state.spendings) state.spendings = [];
+
+  // populate months (union of fine months + spend months)
+  const allMonths = new Set();
+  state.fines.forEach(f => { const d=new Date(f.date); allMonths.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); });
+  state.spendings.forEach(s => { const d=new Date(s.date); allMonths.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); });
+  const months = [...allMonths].sort().reverse();
+  const fmth = document.getElementById('filter-stats-month');
+  fmth.innerHTML = '<option value="">📅 Tất cả (tổng hợp)</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+
+  const filterMonth = fmth.value;
+  const fines = filterMonth ? state.fines.filter(f => f.date.startsWith(filterMonth)) : state.fines;
+  const spendings = filterMonth ? state.spendings.filter(s => s.date.startsWith(filterMonth)) : state.spendings;
+
+  const totalIncome = fines.filter(f => f.status==='paid').reduce((s,f)=>s+f.amount,0);
+  const totalPending = fines.filter(f => f.status==='unpaid').reduce((s,f)=>s+f.amount,0);
+  const totalAll = totalIncome + totalPending;
+  const totalExpense = spendings.reduce((s,x)=>s+x.amount,0);
+  const balance = totalIncome - totalExpense;
+
+  document.getElementById('stats-total').textContent = fmt(totalAll);
+  document.getElementById('stats-income').textContent = fmt(totalIncome);
+  document.getElementById('stats-pending').textContent = fmt(totalPending);
+  document.getElementById('stats-expense').textContent = fmt(totalExpense);
+  document.getElementById('stats-balance').textContent = fmt(balance);
+  document.getElementById('stats-balance').style.color = balance >= 0 ? 'var(--accent)' : 'var(--red)';
+
+  // Bar chart: thu vs chi by month
+  renderBarChart(months);
+  renderCatChart(spendings);
+
+  // Income detail table
+  const incByMonth = {};
+  fines.filter(f=>f.status==='paid').forEach(f => {
+    const d=new Date(f.date); const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!incByMonth[m]) incByMonth[m]={count:0,total:0};
+    incByMonth[m].count++; incByMonth[m].total+=f.amount;
+  });
+  const incMonths = Object.keys(incByMonth).sort().reverse();
+  document.getElementById('stats-income-tbody').innerHTML = incMonths.length === 0
+    ? `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text2)">Chưa có dữ liệu</td></tr>`
+    : incMonths.map(m => {
+        const [y,mo]=m.split('-');
+        return `<tr><td style="color:var(--text2)">Tháng ${mo}/${y}</td><td>${incByMonth[m].count} lần</td><td class="amount-text" style="color:var(--green)">${fmt(incByMonth[m].total)}</td></tr>`;
+      }).join('');
+
+  // Expense detail table
+  const expByMonth = {};
+  spendings.forEach(s => {
+    const d=new Date(s.date); const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!expByMonth[m]) expByMonth[m]={count:0,total:0};
+    expByMonth[m].count++; expByMonth[m].total+=s.amount;
+  });
+  const expMonths = Object.keys(expByMonth).sort().reverse();
+  document.getElementById('stats-expense-tbody').innerHTML = expMonths.length === 0
+    ? `<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text2)">Chưa có khoản chi</td></tr>`
+    : expMonths.map(m => {
+        const [y,mo]=m.split('-');
+        return `<tr><td style="color:var(--text2)">Tháng ${mo}/${y}</td><td>${expByMonth[m].count} khoản</td><td class="amount-text" style="color:var(--red)">-${fmt(expByMonth[m].total)}</td></tr>`;
+      }).join('');
+}
+
+function renderBarChart(months) {
+  const container = document.getElementById('bar-chart-container');
+  if (months.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📊</div><h3>Chưa có dữ liệu</h3></div>`;
+    return;
+  }
+  const display = months.slice(0, 6).reverse();
+  const data = display.map(m => {
+    const inc = state.fines.filter(f => f.status==='paid' && f.date.startsWith(m)).reduce((s,f)=>s+f.amount,0);
+    const exp = (state.spendings||[]).filter(s => s.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
+    return { m, inc, exp };
+  });
+  const maxVal = Math.max(...data.map(d => Math.max(d.inc, d.exp)), 1);
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:8px;height:180px;padding-bottom:28px;position:relative;">
+      ${data.map(d => {
+        const incH = Math.round((d.inc/maxVal)*150);
+        const expH = Math.round((d.exp/maxVal)*150);
+        const [y,mo] = d.m.split('-');
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end;">
+          <div style="display:flex;gap:2px;align-items:flex-end;width:100%;justify-content:center">
+            <div title="Thu: ${fmt(d.inc)}" style="flex:1;max-width:22px;height:${incH}px;background:var(--green);border-radius:3px 3px 0 0;opacity:0.85;min-height:${d.inc>0?2:0}px;cursor:pointer"></div>
+            <div title="Chi: ${fmt(d.exp)}" style="flex:1;max-width:22px;height:${expH}px;background:var(--red);border-radius:3px 3px 0 0;opacity:0.85;min-height:${d.exp>0?2:0}px;cursor:pointer"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text2);margin-top:4px;white-space:nowrap">T${mo}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:16px;margin-top:4px;justify-content:center">
+      <span style="font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>Thu</span>
+      <span style="font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block"></span>Chi</span>
+    </div>`;
+}
+
+function renderCatChart(spendings) {
+  const container = document.getElementById('cat-chart-container');
+  if (spendings.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:24px"><div class="icon">🏷️</div><h3>Chưa có khoản chi</h3></div>`;
+    return;
+  }
+  const bycat = {};
+  spendings.forEach(s => { bycat[s.cat] = (bycat[s.cat]||0) + s.amount; });
+  const total = Object.values(bycat).reduce((a,b)=>a+b,0);
+  const cats = Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
+  container.innerHTML = cats.map(([cat, amt]) => {
+    const pct = Math.round(amt/total*100);
+    const color = CAT_COLORS[cat]||'#888';
+    const icon = CAT_ICONS[cat]||'📦';
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12.5px;font-weight:600">${icon} ${cat}</span>
+        <span style="font-size:12px;font-family:var(--mono);color:${color}">${fmt(amt)} <span style="color:var(--text2);font-size:11px">(${pct}%)</span></span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.5s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── EXPORT ──────────────────────────────────
+function populateExportMonths() {
+  const sel = document.getElementById('export-month-select');
+  const months = getMonths();
+  if (months.length === 0) {
+    const now = new Date();
+    const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    sel.innerHTML = `<option value="${m}">Tháng ${now.getMonth()+1}/${now.getFullYear()}</option>`;
+  } else {
+    sel.innerHTML = months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+  }
+}
+
+function renderExport() {
+  const sel = document.getElementById('export-month-select');
+  const month = sel.value;
+  const [y, mo] = month.split('-');
+  const s = state.settings;
+
+  document.getElementById('exp-group-name').textContent = s.groupName || 'Nhóm của bạn';
+  document.getElementById('exp-month-tag').textContent = `Tháng ${mo}/${y}`;
+  document.getElementById('exp-date').textContent = new Date().toLocaleDateString('vi-VN');
+
+  const fines = state.fines.filter(f => f.date.startsWith(month));
+  const total = fines.reduce((s,f) => s+f.amount, 0);
+  const paid = fines.filter(f => f.status==='paid').reduce((s,f) => s+f.amount, 0);
+  const unpaid = total - paid;
+
+  document.getElementById('exp-total').textContent = fmt(total);
+  document.getElementById('exp-paid').textContent = fmt(paid);
+  document.getElementById('exp-unpaid').textContent = fmt(unpaid);
+
+  const tbody = document.getElementById('exp-tbody');
+  if (fines.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Không có vi phạm trong tháng này</td></tr>`;
+  } else {
+    tbody.innerHTML = fines.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((f,i) => {
+      const m = getMember(f.memberId);
+      return `<tr>
+        <td>${i+1}</td>
+        <td>${m.name}</td>
+        <td>${f.reason}</td>
+        <td style="font-family:monospace;font-weight:700">${fmt(f.amount)}</td>
+        <td>${new Date(f.date).toLocaleDateString('vi-VN')}</td>
+        <td style="color:${f.status==='paid'?'#22c55e':'#ef4444'};font-weight:600">${f.status==='paid'?'✅ Đã đóng':'❌ Chưa đóng'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // bank info
+  document.getElementById('bi-bank').textContent = s.bank || '--';
+  document.getElementById('bi-acc').textContent = s.account || '--';
+  document.getElementById('bi-name').textContent = s.accName || '--';
+  document.getElementById('bi-content').textContent = `${s.content || 'Dong tien phat'} T${mo}/${y}`;
+  document.getElementById('bi-total').textContent = fmt(unpaid);
+  document.getElementById('qr-bank-label').textContent = s.bank || 'Ngân hàng';
+
+  // Generate QR
+  const qrDiv = document.getElementById('qr-code');
+  qrDiv.innerHTML = '';
+
+  // VietQR format
+  let qrData = '';
+  if (s.account && s.bank) {
+    // VietQR EMVCo format
+    const bankMap = {
+      VCB:'970436', TCB:'970407', MB:'970422', VPB:'970432',
+      ACB:'970416', BIDV:'970418', VTB:'970415', TPB:'970423',
+      STB:'970403', MSB:'970426', SHB:'970443', OCB:'970448'
+    };
+    const bankId = bankMap[s.bank] || '970436';
+    const acc = s.account;
+    const content = encodeURIComponent(`${s.content || 'Dong tien phat'} T${mo}/${y}`);
+    const amt = unpaid;
+    qrData = `https://img.vietqr.io/image/${bankId}-${acc}-compact2.png?amount=${amt}&addInfo=${content}&accountName=${encodeURIComponent(s.accName||'')}`;
+
+    // Show as image
+    const img = document.createElement('img');
+    img.src = qrData;
+    img.width = 140; img.height = 140;
+    img.style.borderRadius = '8px';
+    img.onerror = () => generateFallbackQR(qrDiv, qrData);
+    qrDiv.appendChild(img);
+  } else {
+    // Fallback QR with basic info
+    const text = `Tien phat T${mo}/${y}: ${fmt(unpaid)}\nNhom: ${s.groupName||'Team'}`;
+    generateFallbackQR(qrDiv, text);
+    document.getElementById('bi-bank').textContent = '⚠️ Chưa cài đặt';
+    document.getElementById('bi-acc').textContent = 'Vào Cài đặt để thêm TK';
+  }
+}
+
+function generateFallbackQR(container, text) {
+  container.innerHTML = '';
+  try {
+    new QRCode(container, {
+      text: text || 'https://qr.me',
+      width: 130,
+      height: 130,
+      colorDark: '#1a1a2e',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    container.innerHTML = '<div style="width:130px;height:130px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;color:#666;text-align:center;padding:8px">Cài đặt tài khoản để tạo QR</div>';
+  }
+}
+
+function downloadExport() {
+  const el = document.getElementById('export-preview');
+  html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+    const link = document.createElement('a');
+    const sel = document.getElementById('export-month-select');
+    link.download = `bao-cao-phat-${sel.value}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    toast('Đã tải xuống báo cáo!', 'success');
+  }).catch(() => toast('Lỗi khi tải xuống, thử lại!', 'error'));
+}
+
+// ─── SETTINGS ────────────────────────────────
+function loadSettings() {
+  const s = state.settings;
+  document.getElementById('setting-group').value = s.groupName || '';
+  document.getElementById('setting-bank').value = s.bank || 'VCB';
+  document.getElementById('setting-account').value = s.account || '';
+  document.getElementById('setting-accname').value = s.accName || '';
+  document.getElementById('setting-content').value = s.content || '';
+}
+
+function saveSettings() {
+  state.settings = {
+    groupName: document.getElementById('setting-group').value,
+    bank: document.getElementById('setting-bank').value,
+    account: document.getElementById('setting-account').value,
+    accName: document.getElementById('setting-accname').value,
+    content: document.getElementById('setting-content').value,
+  };
+  save(); toast('Đã lưu cài đặt!', 'success');
+}
+
+// ─── QUẢN LÝ DỮ LIỆU (SAO LƯU / KHÔI PHỤC / XÓA) ───
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const link = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  link.download = `quan-ly-phat-backup-${stamp}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  toast('Đã tải file sao lưu!', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.members) || !Array.isArray(data.fines)) {
+        throw new Error('invalid');
+      }
+      if (!confirm('Khôi phục sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại. Bạn chắc chắn chứ?')) {
+        event.target.value = '';
+        return;
+      }
+      const merged = Object.assign({ members: [], fines: [], spendings: [], settings: {} }, data);
+      merged.spendings = merged.spendings || [];
+      localStorage.setItem('fineManagerState', JSON.stringify(merged));
+      alert('Khôi phục dữ liệu thành công! Trang sẽ tải lại.');
+      location.reload();
+    } catch (err) {
+      toast('File không hợp lệ, không thể khôi phục!', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function resetAllData() {
+  if (!confirm('Xóa TOÀN BỘ thành viên, khoản phạt, chi tiêu và cài đặt? Hành động này KHÔNG THỂ hoàn tác.')) return;
+  if (!confirm('Xác nhận lần cuối: xóa sạch mọi dữ liệu?')) return;
+  localStorage.removeItem('fineManagerState');
+  location.reload();
+}
+
+// ─── MODALS ───────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'fine-modal') {
+    document.getElementById('fine-date').value = new Date().toISOString().split('T')[0];
+    const sel = document.getElementById('fine-member');
+    sel.innerHTML = '<option value="">-- Chọn thành viên --</option>' +
+      state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  }
+  if (id === 'spending-modal') {
+    document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ─── ADD FINE ─────────────────────────────────
+function addFine() {
+  const memberId = parseInt(document.getElementById('fine-member').value);
+  const reason = document.getElementById('fine-reason').value.trim();
+  const amount = parseInt(document.getElementById('fine-amount').value);
+  const date = document.getElementById('fine-date').value;
+  const note = document.getElementById('fine-note').value.trim();
+  const status = document.getElementById('fine-status').value;
+
+  if (!memberId) return toast('Vui lòng chọn thành viên!', 'error');
+  if (!reason) return toast('Vui lòng nhập lý do!', 'error');
+  if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
+  if (!date) return toast('Vui lòng chọn ngày!', 'error');
+
+  state.fines.push({ id: state.nextFineId++, memberId, reason, amount, date, note, status });
+  save();
+  closeModal('fine-modal');
+  document.getElementById('fine-reason').value = '';
+  document.getElementById('fine-amount').value = '';
+  document.getElementById('fine-note').value = '';
+  renderDashboard();
+  renderFines();
+  toast('Đã thêm vi phạm!', 'success');
+}
+
+// ─── ADD MEMBER ───────────────────────────────
+function addMember() {
+  const name = document.getElementById('member-name').value.trim();
+  const role = document.getElementById('member-role').value.trim();
+  const phone = document.getElementById('member-phone').value.trim();
+
+  if (!name) return toast('Vui lòng nhập tên thành viên!', 'error');
+
+  const color = COLORS[state.members.length % COLORS.length];
+  state.members.push({ id: state.nextMemberId++, name, role, phone, color });
+  save();
+  closeModal('member-modal');
+  document.getElementById('member-name').value = '';
+  document.getElementById('member-role').value = '';
+  document.getElementById('member-phone').value = '';
+  renderDashboard();
+  renderMembers();
+  toast(`Đã thêm ${name}!`, 'success');
+}
+
+// ─── TOAST ────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type==='success'?'✅':'❌'}</span> ${msg}`;
+  const c = document.getElementById('toast-container');
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ─── INIT ─────────────────────────────────────
+renderDashboard();
