@@ -1,46 +1,39 @@
 // ─── STATE ──────────────────────────────────
-let state = JSON.parse(localStorage.getItem('fineManagerState') || 'null') || {
-  members: [
-    { id: 1,  name: 'AnhTVH',   role: 'Thành viên', phone: '', color: '#f0a500' },
-    { id: 2,  name: 'ThinhTH2', role: 'Thành viên', phone: '', color: '#3b82f6' },
-    { id: 3,  name: 'KhiemVT',  role: 'Thành viên', phone: '', color: '#22c55e' },
-    { id: 4,  name: 'NhueDC',   role: 'Thành viên', phone: '', color: '#a855f7' },
-    { id: 5,  name: 'TriNT',    role: 'Thành viên', phone: '', color: '#ef4444' },
-    { id: 6,  name: 'TramLTM',  role: 'Thành viên', phone: '', color: '#06b6d4' },
-    { id: 7,  name: 'NamNTH3',  role: 'Thành viên', phone: '', color: '#f97316' },
-    { id: 8,  name: 'MinhLN9',  role: 'Thành viên', phone: '', color: '#ec4899' },
-    { id: 9,  name: 'KietPT2',  role: 'Thành viên', phone: '', color: '#14b8a6' },
-    { id: 10, name: 'HaiLT5',   role: 'Thành viên', phone: '', color: '#8b5cf6' },
-    { id: 11, name: 'DangPHH',  role: 'Thành viên', phone: '', color: '#84cc16' },
-  ],
-  fines: [
-    { id: 1, memberId: 1,  reason: 'Đi trễ',                amount: 50000,  date: '2026-04-03', note: '', status: 'paid' },
-    { id: 2, memberId: 4,  reason: 'không kéo status task',  amount: 50000,  date: '2026-03-12', note: '', status: 'paid' },
-    { id: 3, memberId: 11, reason: 'Đi trễ',                amount: 100000, date: '2026-04-17', note: '', status: 'paid' },
-    { id: 4, memberId: 6,  reason: 'Đi trễ',                amount: 150000, date: '2026-04-20', note: '', status: 'paid' },
-    { id: 5, memberId: 10, reason: 'chưa kéo task',          amount: 50000,  date: '2026-03-17', note: '', status: 'paid' },
-    { id: 6, memberId: 9,  reason: 'Chưa kéo task',          amount: 50000,  date: '2026-04-17', note: '', status: 'paid' },
-    { id: 7, memberId: 10, reason: 'chưa kéo task',          amount: 50000,  date: '2026-04-21', note: '', status: 'paid' },
-    { id: 8, memberId: 6,  reason: 'Đi trễ',                amount: 50000,  date: '2026-04-23', note: '', status: 'paid' },
-    { id: 9, memberId: 6,  reason: 'Tiền tài trợ',           amount: 550000, date: '2026-04-23', note: '', status: 'paid' },
-  ],
-  settings: {
-    groupName: 'Team của tôi',
-    bank: 'VCB',
-    account: '',
-    accName: '',
-    content: 'Dong tien phat nhom'
-  },
-  nextMemberId: 12,
-  nextFineId: 10,
-  spendings: [],
-  nextSpendId: 1,
-};
+// Dữ liệu được tải từ API (server + SQLite) và cache trong bộ nhớ để các hàm render dùng.
+let state = { members: [], fines: [], spendings: [], settings: {} };
 
 const COLORS = ['#f0a500','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#f97316','#ec4899','#14b8a6','#8b5cf6'];
 
-function save() {
-  localStorage.setItem('fineManagerState', JSON.stringify(state));
+// ─── API CLIENT ─────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch('/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) {
+    let msg = 'Lỗi máy chủ (' + res.status + ')';
+    try { const j = await res.json(); if (j.error) msg = j.error; } catch (e) {}
+    throw new Error(msg);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// Tải toàn bộ dữ liệu từ server vào state
+async function loadState() {
+  const [members, fines, spendings, settings] = await Promise.all([
+    api('/members'), api('/fines'), api('/spendings'), api('/settings'),
+  ]);
+  state.members = members;
+  state.fines = fines;
+  state.spendings = spendings;
+  state.settings = settings || {};
+}
+
+// Tải lại dữ liệu rồi vẽ lại dashboard + trang đang mở
+async function refresh() {
+  await loadState();
+  renderDashboard();
+  if (currentPage && currentPage !== 'dashboard') renderPage(currentPage);
 }
 
 // ─── PAGE NAVIGATION ─────────────────────────
@@ -56,7 +49,10 @@ const pageTitles = {
 
 const pageOrder = ['dashboard','fines','members','spending','stats','export','settings'];
 
+let currentPage = 'dashboard';
+
 function switchPage(name) {
+  currentPage = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
@@ -198,15 +194,24 @@ function renderFines() {
   }).join('');
 }
 
-function togglePaid(id) {
+async function togglePaid(id) {
   const f = state.fines.find(x => x.id === id);
-  if (f) { f.status = f.status === 'paid' ? 'unpaid' : 'paid'; save(); renderFines(); renderDashboard(); toast('Cập nhật trạng thái thành công!', 'success'); }
+  if (!f) return;
+  const status = f.status === 'paid' ? 'unpaid' : 'paid';
+  try {
+    await api('/fines/' + id, { method: 'PATCH', body: JSON.stringify({ status }) });
+    await refresh();
+    toast('Cập nhật trạng thái thành công!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
-function deleteFine(id) {
+async function deleteFine(id) {
   if (!confirm('Xoá vi phạm này?')) return;
-  state.fines = state.fines.filter(x => x.id !== id);
-  save(); renderFines(); renderDashboard(); toast('Đã xoá vi phạm', 'success');
+  try {
+    await api('/fines/' + id, { method: 'DELETE' });
+    await refresh();
+    toast('Đã xoá vi phạm', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── MEMBERS ─────────────────────────────────
@@ -250,10 +255,13 @@ function filterByMember(id) {
   }, 100);
 }
 
-function deleteMember(id) {
+async function deleteMember(id) {
   if (!confirm('Xoá thành viên này? Các vi phạm liên quan vẫn được giữ lại.')) return;
-  state.members = state.members.filter(m => m.id !== id);
-  save(); renderMembers(); toast('Đã xoá thành viên', 'success');
+  try {
+    await api('/members/' + id, { method: 'DELETE' });
+    await refresh();
+    toast('Đã xoá thành viên', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── SPENDING ────────────────────────────────
@@ -303,7 +311,7 @@ function renderSpending() {
   }).join('');
 }
 
-function addSpending() {
+async function addSpending() {
   const desc = document.getElementById('spend-desc').value.trim();
   const cat = document.getElementById('spend-cat').value;
   const amount = parseInt(document.getElementById('spend-amount').value);
@@ -312,22 +320,24 @@ function addSpending() {
   if (!desc) return toast('Vui lòng nhập nội dung chi!', 'error');
   if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
   if (!date) return toast('Vui lòng chọn ngày!', 'error');
-  if (!state.spendings) state.spendings = [];
-  if (!state.nextSpendId) state.nextSpendId = 1;
-  state.spendings.push({ id: state.nextSpendId++, desc, cat, amount, date, note });
-  save();
-  closeModal('spending-modal');
-  document.getElementById('spend-desc').value = '';
-  document.getElementById('spend-amount').value = '';
-  document.getElementById('spend-note').value = '';
-  renderSpending();
-  toast('Đã thêm khoản chi!', 'success');
+  try {
+    await api('/spendings', { method: 'POST', body: JSON.stringify({ desc, cat, amount, date, note }) });
+    closeModal('spending-modal');
+    document.getElementById('spend-desc').value = '';
+    document.getElementById('spend-amount').value = '';
+    document.getElementById('spend-note').value = '';
+    await refresh();
+    toast('Đã thêm khoản chi!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
-function deleteSpending(id) {
+async function deleteSpending(id) {
   if (!confirm('Xoá khoản chi này?')) return;
-  state.spendings = state.spendings.filter(s => s.id !== id);
-  save(); renderSpending(); toast('Đã xoá khoản chi', 'success');
+  try {
+    await api('/spendings/' + id, { method: 'DELETE' });
+    await refresh();
+    toast('Đã xoá khoản chi', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── STATS ───────────────────────────────────
@@ -586,35 +596,42 @@ function loadSettings() {
   document.getElementById('setting-content').value = s.content || '';
 }
 
-function saveSettings() {
-  state.settings = {
+async function saveSettings() {
+  const body = {
     groupName: document.getElementById('setting-group').value,
     bank: document.getElementById('setting-bank').value,
     account: document.getElementById('setting-account').value,
     accName: document.getElementById('setting-accname').value,
     content: document.getElementById('setting-content').value,
   };
-  save(); toast('Đã lưu cài đặt!', 'success');
+  try {
+    await api('/settings', { method: 'PUT', body: JSON.stringify(body) });
+    state.settings = body;
+    toast('Đã lưu cài đặt!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── QUẢN LÝ DỮ LIỆU (SAO LƯU / KHÔI PHỤC / XÓA) ───
-function exportData() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const link = document.createElement('a');
-  const d = new Date();
-  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-  link.download = `quan-ly-phat-backup-${stamp}.json`;
-  link.href = URL.createObjectURL(blob);
-  link.click();
-  URL.revokeObjectURL(link.href);
-  toast('Đã tải file sao lưu!', 'success');
+async function exportData() {
+  try {
+    const data = await api('/backup');
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    link.download = `quan-ly-phat-backup-${stamp}.json`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast('Đã tải file sao lưu!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const data = JSON.parse(e.target.result);
       if (!data || !Array.isArray(data.members) || !Array.isArray(data.fines)) {
@@ -624,24 +641,45 @@ function importData(event) {
         event.target.value = '';
         return;
       }
-      const merged = Object.assign({ members: [], fines: [], spendings: [], settings: {} }, data);
-      merged.spendings = merged.spendings || [];
-      localStorage.setItem('fineManagerState', JSON.stringify(merged));
+      await api('/restore', { method: 'POST', body: JSON.stringify({
+        members: data.members, fines: data.fines,
+        spendings: data.spendings || [], settings: data.settings || {},
+      }) });
       alert('Khôi phục dữ liệu thành công! Trang sẽ tải lại.');
       location.reload();
     } catch (err) {
-      toast('File không hợp lệ, không thể khôi phục!', 'error');
+      toast(err.message === 'invalid' ? 'File không hợp lệ, không thể khôi phục!' : err.message, 'error');
     }
     event.target.value = '';
   };
   reader.readAsText(file);
 }
 
-function resetAllData() {
+async function resetAllData() {
   if (!confirm('Xóa TOÀN BỘ thành viên, khoản phạt, chi tiêu và cài đặt? Hành động này KHÔNG THỂ hoàn tác.')) return;
   if (!confirm('Xác nhận lần cuối: xóa sạch mọi dữ liệu?')) return;
-  localStorage.removeItem('fineManagerState');
-  location.reload();
+  try {
+    await api('/restore', { method: 'POST', body: JSON.stringify({ members: [], fines: [], spendings: [], settings: {} }) });
+    location.reload();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// Nhập dữ liệu từ localStorage của bản cũ (nếu trước đây bạn đã nhập liệu)
+async function importFromLocalStorage() {
+  const raw = localStorage.getItem('fineManagerState');
+  if (!raw) return toast('Không tìm thấy dữ liệu localStorage cũ trên trình duyệt này.', 'error');
+  let data;
+  try { data = JSON.parse(raw); } catch (e) { return toast('Dữ liệu localStorage cũ bị hỏng.', 'error'); }
+  if (!Array.isArray(data.members) || !Array.isArray(data.fines)) return toast('Dữ liệu localStorage cũ không hợp lệ.', 'error');
+  if (!confirm('Nhập dữ liệu từ localStorage cũ sẽ GHI ĐÈ dữ liệu trong DB hiện tại. Tiếp tục?')) return;
+  try {
+    await api('/restore', { method: 'POST', body: JSON.stringify({
+      members: data.members, fines: data.fines,
+      spendings: data.spendings || [], settings: data.settings || {},
+    }) });
+    alert('Đã nhập dữ liệu từ localStorage vào DB! Trang sẽ tải lại.');
+    location.reload();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── MODALS ───────────────────────────────────
@@ -667,7 +705,7 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ─── ADD FINE ─────────────────────────────────
-function addFine() {
+async function addFine() {
   const memberId = parseInt(document.getElementById('fine-member').value);
   const reason = document.getElementById('fine-reason').value.trim();
   const amount = parseInt(document.getElementById('fine-amount').value);
@@ -680,19 +718,19 @@ function addFine() {
   if (!amount || amount <= 0) return toast('Vui lòng nhập số tiền hợp lệ!', 'error');
   if (!date) return toast('Vui lòng chọn ngày!', 'error');
 
-  state.fines.push({ id: state.nextFineId++, memberId, reason, amount, date, note, status });
-  save();
-  closeModal('fine-modal');
-  document.getElementById('fine-reason').value = '';
-  document.getElementById('fine-amount').value = '';
-  document.getElementById('fine-note').value = '';
-  renderDashboard();
-  renderFines();
-  toast('Đã thêm vi phạm!', 'success');
+  try {
+    await api('/fines', { method: 'POST', body: JSON.stringify({ memberId, reason, amount, date, note, status }) });
+    closeModal('fine-modal');
+    document.getElementById('fine-reason').value = '';
+    document.getElementById('fine-amount').value = '';
+    document.getElementById('fine-note').value = '';
+    await refresh();
+    toast('Đã thêm vi phạm!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── ADD MEMBER ───────────────────────────────
-function addMember() {
+async function addMember() {
   const name = document.getElementById('member-name').value.trim();
   const role = document.getElementById('member-role').value.trim();
   const phone = document.getElementById('member-phone').value.trim();
@@ -700,15 +738,15 @@ function addMember() {
   if (!name) return toast('Vui lòng nhập tên thành viên!', 'error');
 
   const color = COLORS[state.members.length % COLORS.length];
-  state.members.push({ id: state.nextMemberId++, name, role, phone, color });
-  save();
-  closeModal('member-modal');
-  document.getElementById('member-name').value = '';
-  document.getElementById('member-role').value = '';
-  document.getElementById('member-phone').value = '';
-  renderDashboard();
-  renderMembers();
-  toast(`Đã thêm ${name}!`, 'success');
+  try {
+    await api('/members', { method: 'POST', body: JSON.stringify({ name, role: role || 'Thành viên', phone, color }) });
+    closeModal('member-modal');
+    document.getElementById('member-name').value = '';
+    document.getElementById('member-role').value = '';
+    document.getElementById('member-phone').value = '';
+    await refresh();
+    toast(`Đã thêm ${name}!`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ─── TOAST ────────────────────────────────────
@@ -722,4 +760,13 @@ function toast(msg, type='success') {
 }
 
 // ─── INIT ─────────────────────────────────────
-renderDashboard();
+loadState()
+  .then(() => renderDashboard())
+  .catch(err => {
+    document.querySelector('.content').innerHTML =
+      `<div class="empty-state" style="padding:64px 24px">
+         <div class="icon">🔌</div>
+         <h3>Không kết nối được máy chủ</h3>
+         <p>Hãy chạy <b>node server.js</b> rồi mở lại <b>http://localhost:3000</b>.<br>Chi tiết: ${err.message}</p>
+       </div>`;
+  });

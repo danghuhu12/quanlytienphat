@@ -792,11 +792,12 @@
         <div class="card-header"><div class="card-title">🗄️ Quản lý dữ liệu</div></div>
         <div class="modal-body">
           <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;">
-            Dữ liệu được lưu trên trình duyệt này. Hãy sao lưu định kỳ để tránh mất dữ liệu khi xóa cache hoặc đổi thiết bị.
+            Dữ liệu được lưu trong file <b>data.db</b> (SQLite) trên máy chạy server — không mất khi xóa cache trình duyệt. Hãy sao lưu định kỳ (hoặc copy file data.db) để an toàn.
           </p>
           <div style="display:flex;flex-wrap:wrap;gap:10px;">
             <button class="btn btn-green" onclick="exportData()">⬇️ Sao lưu (tải file .json)</button>
             <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">⬆️ Khôi phục từ file</button>
+            <button class="btn btn-secondary" onclick="importFromLocalStorage()">📥 Nhập từ localStorage cũ</button>
             <button class="btn btn-danger" onclick="resetAllData()">🗑️ Xóa toàn bộ dữ liệu</button>
           </div>
           <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importData(event)">

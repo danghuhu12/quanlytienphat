@@ -4,3 +4,8 @@ node_modules/
 *.log
 .vscode/
 .idea/
+
+# SQLite database (dữ liệu cục bộ, không commit)
+data.db
+data.db-shm
+data.db-wal
