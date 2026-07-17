@@ -9,7 +9,7 @@ app.use(express.json({ limit: '5mb' }));
 const memberCols = 'id, name, role, phone, color';
 const fineCols = 'id, memberId, reason, amount, date, note, status';
 const spendCols = 'id, descr AS "desc", cat, amount, date, note';
-const settingCols = 'groupName, bank, account, accName, content';
+const settingCols = 'groupName, bank, account, accName, content, treasurer, zalopay';
 
 // ─── MEMBERS ───────────────────────────────
 app.get('/api/members', (req, res) => {
@@ -68,9 +68,9 @@ app.get('/api/settings', (req, res) => {
   res.json(db.prepare(`SELECT ${settingCols} FROM settings WHERE id = 1`).get());
 });
 app.put('/api/settings', (req, res) => {
-  const { groupName = '', bank = 'VCB', account = '', accName = '', content = '' } = req.body || {};
-  db.prepare('UPDATE settings SET groupName=?, bank=?, account=?, accName=?, content=? WHERE id=1')
-    .run(groupName, bank, account, accName, content);
+  const { groupName = '', content = '', treasurer = 'Hải Đăng', zalopay = '' } = req.body || {};
+  db.prepare('UPDATE settings SET groupName=?, content=?, treasurer=?, zalopay=? WHERE id=1')
+    .run(groupName, content, treasurer, zalopay);
   res.status(204).end();
 });
 
@@ -95,9 +95,10 @@ app.post('/api/restore', (req, res) => {
     fines.forEach(f => insF.run(f.id, f.memberId, f.reason, f.amount, f.date, f.note || '', f.status || 'unpaid'));
     const insS = db.prepare('INSERT INTO spendings (id, descr, cat, amount, date, note) VALUES (?, ?, ?, ?, ?, ?)');
     spendings.forEach(s => insS.run(s.id, s.desc, s.cat || 'khác', s.amount, s.date, s.note || ''));
-    db.prepare('UPDATE settings SET groupName=?, bank=?, account=?, accName=?, content=? WHERE id=1').run(
+    db.prepare('UPDATE settings SET groupName=?, bank=?, account=?, accName=?, content=?, treasurer=?, zalopay=? WHERE id=1').run(
       settings.groupName || 'Team của tôi', settings.bank || 'VCB', settings.account || '',
-      settings.accName || '', settings.content || 'Dong tien phat nhom');
+      settings.accName || '', settings.content || 'Dong tien phat nhom',
+      settings.treasurer || 'Hải Đăng', settings.zalopay || '');
   })();
   res.status(204).end();
 });

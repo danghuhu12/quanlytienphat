@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -55,10 +54,19 @@
   </div>
 </div>
 
+<!-- OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div class="topbar-title" id="page-title">📊 Tổng quan</div>
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Mở menu">☰</button>
+      <div>
+        <div class="topbar-title" id="page-title">📊 Tổng quan</div>
+        <div class="topbar-subtitle" id="page-subtitle">Xem nhanh tình hình quỹ phạt của nhóm</div>
+      </div>
+    </div>
     <div class="topbar-actions">
       <button class="btn btn-secondary" onclick="openModal(&#39;fine-modal&#39;)">+ Thêm phạt</button>
       <button class="btn btn-primary" onclick="openModal(&#39;member-modal&#39;)">+ Thêm thành viên</button>
@@ -194,7 +202,8 @@
     <!-- FINES PAGE -->
     <div class="page" id="page-fines">
       <div class="filter-bar">
-        <select class="form-control" id="filter-member" onchange="renderFines()"><option value="">👤 Tất cả thành viên</option><option value="1">AnhTVH</option><option value="2">ThinhTH2</option><option value="3">KhiemVT</option><option value="4">NhueDC</option><option value="5">TriNT</option><option value="6">TramLTM</option><option value="7">NamNTH3</option><option value="8">MinhLN9</option><option value="9">KietPT2</option><option value="10">HaiLT5</option><option value="11">DangPHH</option></select>
+        <input class="form-control" id="filter-search" placeholder="🔍 Tìm theo tên / lý do..." oninput="renderFines()" style="flex:1;min-width:200px;">
+        <select class="form-control" id="filter-member" onchange="renderFines()"><option value="">👤 Tất cả thành viên</option></select>
         <select class="form-control" id="filter-status" onchange="renderFines()">
           <option value="">📋 Tất cả trạng thái</option>
           <option value="unpaid">Chưa đóng</option>
@@ -212,8 +221,8 @@
             <tr>
               <th>Thành viên</th>
               <th>Lý do vi phạm</th>
-              <th>Số tiền</th>
-              <th>Ngày vi phạm</th>
+              <th class="sortable" id="th-amount" onclick="sortFines('amount')">Số tiền <span class="arrow">↕</span></th>
+              <th class="sortable" id="th-date" onclick="sortFines('date')">Ngày vi phạm <span class="arrow">↕</span></th>
               <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
@@ -526,8 +535,8 @@
     <!-- EXPORT PAGE -->
     <div class="page" id="page-export">
       <div class="month-selector">
-        <span style="font-weight:600;font-size:14px;">📅 Chọn tháng xuất báo cáo:</span>
-        <select class="form-control" id="export-month-select" onchange="renderExport()" style="width:160px;"><option value="2026-04">Tháng 04/2026</option><option value="2026-03">Tháng 03/2026</option></select>
+        <span style="font-weight:600;font-size:14px;">📅 Chọn kỳ báo cáo:</span>
+        <select class="form-control" id="export-month-select" onchange="renderExport()" style="width:220px;"><option value="all">📊 Tổng hợp (tất cả các tháng)</option></select>
         <button class="btn btn-primary" onclick="downloadExport()">⬇️ Tải xuống ảnh</button>
       </div>
       <div id="export-preview">
@@ -546,7 +555,7 @@
         <div class="export-summary">
           <div class="export-stat">
             <div class="val" id="exp-total" style="color:#e05c2a;">1.000.000đ</div>
-            <div class="lbl">Tổng phạt tháng</div>
+            <div class="lbl">Tổng phạt</div>
           </div>
           <div class="export-stat">
             <div class="val" id="exp-paid" style="color:#22c55e;">1.000.000đ</div>
@@ -622,17 +631,11 @@
         </table>
 
         <div class="export-footer">
-          <div class="qr-section">
-            <div class="qr-title">📱 Quét QR để chuyển khoản</div>
-            <div id="qr-code"><div style="width:130px;height:130px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;color:#666;text-align:center;padding:8px">Cài đặt tài khoản để tạo QR</div></div>
-            <div class="qr-label" id="qr-bank-label">VCB</div>
-          </div>
-          <div class="bank-info">
-            <h3>💳 Thông tin chuyển khoản</h3>
-            <div class="bank-row"><span class="key">Ngân hàng:</span><span class="val" id="bi-bank">⚠️ Chưa cài đặt</span></div>
-            <div class="bank-row"><span class="key">Số TK:</span><span class="val" id="bi-acc">Vào Cài đặt để thêm TK</span></div>
-            <div class="bank-row"><span class="key">Chủ TK:</span><span class="val" id="bi-name">--</span></div>
-            <div class="bank-row"><span class="key">Nội dung:</span><span class="val" id="bi-content">Dong tien phat nhom T04/2026</span></div>
+          <div class="bank-info" style="flex:1">
+            <h3>💰 Chuyển tiền qua Zalopay</h3>
+            <div class="bank-row"><span class="key">Thủ quỹ:</span><span class="val" id="bi-treasurer">Hải Đăng</span></div>
+            <div class="bank-row"><span class="key">Zalopay / SĐT:</span><span class="val" id="bi-zalopay">--</span></div>
+            <div class="bank-row"><span class="key">Nội dung:</span><span class="val" id="bi-content">Dong tien phat nhom</span></div>
             <div class="bank-row"><span class="key">Tổng cần đóng:</span><span class="val amount" id="bi-total">0đ</span></div>
           </div>
         </div>
@@ -747,42 +750,25 @@
     <!-- SETTINGS PAGE -->
     <div class="page" id="page-settings">
       <div class="card" style="max-width:560px;">
-        <div class="card-header"><div class="card-title">⚙️ Cài đặt nhóm &amp; Tài khoản nhận tiền</div></div>
+        <div class="card-header"><div class="card-title">⚙️ Cài đặt nhóm &amp; Thủ quỹ (Zalopay)</div></div>
         <div class="modal-body">
           <div class="form-group">
             <label class="form-label">Tên nhóm</label>
             <input class="form-control" id="setting-group" placeholder="VD: Team Alpha 2024" value="Team của tôi">
           </div>
-          <div class="form-group">
-            <label class="form-label">Ngân hàng nhận tiền</label>
-            <select class="form-control" id="setting-bank">
-              <option value="VCB">Vietcombank (VCB)</option>
-              <option value="TCB">Techcombank (TCB)</option>
-              <option value="MB">MB Bank</option>
-              <option value="VPB">VPBank</option>
-              <option value="ACB">ACB Bank</option>
-              <option value="BIDV">BIDV</option>
-              <option value="VTB">Vietinbank</option>
-              <option value="TPB">TPBank</option>
-              <option value="STB">Sacombank</option>
-              <option value="MSB">MSB Bank</option>
-              <option value="SHB">SHB Bank</option>
-              <option value="OCB">OCB Bank</option>
-            </select>
-          </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Số tài khoản</label>
-              <input class="form-control" id="setting-account" placeholder="VD: 1234567890">
+              <label class="form-label">Thủ quỹ (nhận Zalopay)</label>
+              <input class="form-control" id="setting-treasurer" placeholder="VD: Hải Đăng" value="Hải Đăng">
             </div>
             <div class="form-group">
-              <label class="form-label">Tên chủ tài khoản</label>
-              <input class="form-control" id="setting-accname" placeholder="VD: NGUYEN VAN A">
+              <label class="form-label">Số Zalopay / SĐT</label>
+              <input class="form-control" id="setting-zalopay" placeholder="VD: 0901234567">
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Nội dung chuyển khoản mặc định</label>
-            <input class="form-control" id="setting-content" placeholder="VD: Team Alpha dong tien phat thang" value="Dong tien phat nhom">
+            <label class="form-label">Nội dung chuyển tiền mặc định</label>
+            <input class="form-control" id="setting-content" placeholder="VD: Team Alpha dong tien phat" value="Dong tien phat nhom">
           </div>
           <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu cài đặt</button>
         </div>
@@ -826,7 +812,15 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Số tiền phạt (đ) *</label>
-          <input class="form-control" id="fine-amount" type="number" placeholder="VD: 50000">
+          <input class="form-control" id="fine-amount" type="number" placeholder="VD: 50000" oninput="updateAmountPreview('fine-amount','fine-amount-preview')">
+          <div class="quick-amounts">
+            <button type="button" class="chip" onclick="setAmount('fine-amount',20000)">20k</button>
+            <button type="button" class="chip" onclick="setAmount('fine-amount',50000)">50k</button>
+            <button type="button" class="chip" onclick="setAmount('fine-amount',100000)">100k</button>
+            <button type="button" class="chip" onclick="setAmount('fine-amount',150000)">150k</button>
+            <button type="button" class="chip" onclick="setAmount('fine-amount',200000)">200k</button>
+          </div>
+          <div class="amount-preview" id="fine-amount-preview"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Ngày vi phạm *</label>
@@ -908,7 +902,14 @@
         </div>
         <div class="form-group">
           <label class="form-label">Số tiền (đ) *</label>
-          <input class="form-control" id="spend-amount" type="number" placeholder="VD: 200000">
+          <input class="form-control" id="spend-amount" type="number" placeholder="VD: 200000" oninput="updateAmountPreview('spend-amount','spend-amount-preview')">
+          <div class="quick-amounts">
+            <button type="button" class="chip" onclick="setAmount('spend-amount',50000)">50k</button>
+            <button type="button" class="chip" onclick="setAmount('spend-amount',100000)">100k</button>
+            <button type="button" class="chip" onclick="setAmount('spend-amount',200000)">200k</button>
+            <button type="button" class="chip" onclick="setAmount('spend-amount',500000)">500k</button>
+          </div>
+          <div class="amount-preview" id="spend-amount-preview"></div>
         </div>
       </div>
       <div class="form-row">

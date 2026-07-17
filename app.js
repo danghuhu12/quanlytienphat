@@ -51,6 +51,16 @@ const pageOrder = ['dashboard','fines','members','spending','stats','export','se
 
 let currentPage = 'dashboard';
 
+const pageSubtitles = {
+  dashboard: 'Xem nhanh tình hình quỹ phạt của nhóm',
+  fines: 'Thêm, tìm, lọc và sắp xếp các khoản vi phạm',
+  members: 'Danh sách thành viên và tình trạng đóng phạt',
+  spending: 'Ghi nhận các khoản chi tiêu từ quỹ',
+  stats: 'Biểu đồ và thống kê thu chi theo tháng',
+  export: 'Tạo và tải báo cáo theo tháng hoặc tổng hợp',
+  settings: 'Cấu hình nhóm, thủ quỹ Zalopay và sao lưu dữ liệu',
+};
+
 function switchPage(name) {
   currentPage = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -59,7 +69,29 @@ function switchPage(name) {
   const idx = pageOrder.indexOf(name);
   if (idx >= 0) document.querySelectorAll('.nav-item')[idx].classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[name];
+  document.getElementById('page-subtitle').textContent = pageSubtitles[name] || '';
+  if (window.innerWidth <= 900) toggleSidebar(false);   // đóng menu sau khi chọn trên mobile
   renderPage(name);
+}
+
+// Mở/đóng sidebar trên mobile. Truyền true/false để ép trạng thái.
+function toggleSidebar(open) {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const willOpen = open === undefined ? !sb.classList.contains('open') : open;
+  sb.classList.toggle('open', willOpen);
+  ov.classList.toggle('show', willOpen);
+}
+
+// Điền nhanh số tiền + xem trước dạng "50.000đ"
+function setAmount(id, val) {
+  document.getElementById(id).value = val;
+  updateAmountPreview(id, id + '-preview');
+}
+function updateAmountPreview(id, previewId) {
+  const v = parseInt(document.getElementById(id).value);
+  const p = document.getElementById(previewId);
+  if (p) p.textContent = v > 0 ? '= ' + fmt(v) : '';
 }
 
 function renderPage(name) {
@@ -142,28 +174,63 @@ function renderDashboard() {
 }
 
 // ─── FINES ────────────────────────────────────
+let finesSort = { key: 'date', dir: 'desc' };
+
+function sortFines(key) {
+  if (finesSort.key === key) finesSort.dir = finesSort.dir === 'asc' ? 'desc' : 'asc';
+  else finesSort = { key, dir: 'desc' };
+  renderFines();
+}
+
+function updateSortHeaders() {
+  [['amount','th-amount'], ['date','th-date']].forEach(([key, id]) => {
+    const th = document.getElementById(id);
+    if (!th) return;
+    const active = finesSort.key === key;
+    th.classList.toggle('sorted', active);
+    const arrow = th.querySelector('.arrow');
+    if (arrow) arrow.textContent = active ? (finesSort.dir === 'asc' ? '↑' : '↓') : '↕';
+  });
+}
+
 function renderFines() {
-  // populate member filter
+  // populate member filter (giữ nguyên lựa chọn hiện tại khi rebuild)
   const fm = document.getElementById('filter-member');
+  const prevMember = fm.value;
   fm.innerHTML = '<option value="">👤 Tất cả thành viên</option>' +
     state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+  if ([...fm.options].some(o => o.value === prevMember)) fm.value = prevMember;
 
-  // populate month filter
+  // populate month filter (giữ nguyên lựa chọn)
   const fmth = document.getElementById('filter-month');
+  const prevMonth = fmth.value;
   const months = getMonths();
   fmth.innerHTML = '<option value="">📅 Tất cả tháng</option>' +
     months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+  if ([...fmth.options].some(o => o.value === prevMonth)) fmth.value = prevMonth;
 
   // filter
   let fines = [...state.fines];
   const memberF = fm.value;
   const statusF = document.getElementById('filter-status').value;
   const monthF = fmth.value;
+  const searchF = (document.getElementById('filter-search').value || '').trim().toLowerCase();
 
   if (memberF) fines = fines.filter(f => f.memberId == memberF);
   if (statusF) fines = fines.filter(f => f.status === statusF);
   if (monthF) fines = fines.filter(f => f.date.startsWith(monthF));
-  fines.sort((a,b) => new Date(b.date)-new Date(a.date));
+  if (searchF) fines = fines.filter(f => {
+    const m = getMember(f.memberId);
+    return `${m.name} ${f.reason} ${f.note || ''}`.toLowerCase().includes(searchF);
+  });
+
+  // sort theo cột đang chọn
+  const dir = finesSort.dir === 'asc' ? 1 : -1;
+  fines.sort((a, b) => {
+    const r = finesSort.key === 'amount' ? a.amount - b.amount : new Date(a.date) - new Date(b.date);
+    return r * dir;
+  });
+  updateSortHeaders();
 
   // fine member select
   const fms = document.getElementById('fine-member');
@@ -469,27 +536,28 @@ function renderCatChart(spendings) {
 // ─── EXPORT ──────────────────────────────────
 function populateExportMonths() {
   const sel = document.getElementById('export-month-select');
+  const prev = sel.value;
   const months = getMonths();
-  if (months.length === 0) {
-    const now = new Date();
-    const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-    sel.innerHTML = `<option value="${m}">Tháng ${now.getMonth()+1}/${now.getFullYear()}</option>`;
-  } else {
-    sel.innerHTML = months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
-  }
+  sel.innerHTML =
+    '<option value="all">📊 Tổng hợp (tất cả các tháng)</option>' +
+    months.map(m => { const [y,mo] = m.split('-'); return `<option value="${m}">Tháng ${mo}/${y}</option>`; }).join('');
+  // giữ lựa chọn cũ nếu còn hợp lệ
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
 
 function renderExport() {
   const sel = document.getElementById('export-month-select');
-  const month = sel.value;
-  const [y, mo] = month.split('-');
+  const period = sel.value || 'all';          // 'all' hoặc 'YYYY-MM'
+  const isAll = period === 'all';
+  const [y, mo] = isAll ? ['', ''] : period.split('-');
+  const periodLabel = isAll ? 'Tổng hợp (tất cả)' : `Tháng ${mo}/${y}`;
   const s = state.settings;
 
   document.getElementById('exp-group-name').textContent = s.groupName || 'Nhóm của bạn';
-  document.getElementById('exp-month-tag').textContent = `Tháng ${mo}/${y}`;
+  document.getElementById('exp-month-tag').textContent = periodLabel;
   document.getElementById('exp-date').textContent = new Date().toLocaleDateString('vi-VN');
 
-  const fines = state.fines.filter(f => f.date.startsWith(month));
+  const fines = isAll ? [...state.fines] : state.fines.filter(f => f.date.startsWith(period));
   const total = fines.reduce((s,f) => s+f.amount, 0);
   const paid = fines.filter(f => f.status==='paid').reduce((s,f) => s+f.amount, 0);
   const unpaid = total - paid;
@@ -500,7 +568,7 @@ function renderExport() {
 
   const tbody = document.getElementById('exp-tbody');
   if (fines.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Không có vi phạm trong tháng này</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#888">Không có vi phạm nào</td></tr>`;
   } else {
     tbody.innerHTML = fines.sort((a,b)=>new Date(a.date)-new Date(b.date)).map((f,i) => {
       const m = getMember(f.memberId);
@@ -515,63 +583,12 @@ function renderExport() {
     }).join('');
   }
 
-  // bank info
-  document.getElementById('bi-bank').textContent = s.bank || '--';
-  document.getElementById('bi-acc').textContent = s.account || '--';
-  document.getElementById('bi-name').textContent = s.accName || '--';
-  document.getElementById('bi-content').textContent = `${s.content || 'Dong tien phat'} T${mo}/${y}`;
+  // Chuyển tiền qua Zalopay (dạng chữ)
+  const contentSuffix = isAll ? '' : ` T${mo}/${y}`;
+  document.getElementById('bi-treasurer').textContent = s.treasurer || 'Hải Đăng';
+  document.getElementById('bi-zalopay').textContent = s.zalopay || '⚠️ Chưa cài đặt (vào Cài đặt để thêm)';
+  document.getElementById('bi-content').textContent = `${s.content || 'Dong tien phat'}${contentSuffix}`;
   document.getElementById('bi-total').textContent = fmt(unpaid);
-  document.getElementById('qr-bank-label').textContent = s.bank || 'Ngân hàng';
-
-  // Generate QR
-  const qrDiv = document.getElementById('qr-code');
-  qrDiv.innerHTML = '';
-
-  // VietQR format
-  let qrData = '';
-  if (s.account && s.bank) {
-    // VietQR EMVCo format
-    const bankMap = {
-      VCB:'970436', TCB:'970407', MB:'970422', VPB:'970432',
-      ACB:'970416', BIDV:'970418', VTB:'970415', TPB:'970423',
-      STB:'970403', MSB:'970426', SHB:'970443', OCB:'970448'
-    };
-    const bankId = bankMap[s.bank] || '970436';
-    const acc = s.account;
-    const content = encodeURIComponent(`${s.content || 'Dong tien phat'} T${mo}/${y}`);
-    const amt = unpaid;
-    qrData = `https://img.vietqr.io/image/${bankId}-${acc}-compact2.png?amount=${amt}&addInfo=${content}&accountName=${encodeURIComponent(s.accName||'')}`;
-
-    // Show as image
-    const img = document.createElement('img');
-    img.src = qrData;
-    img.width = 140; img.height = 140;
-    img.style.borderRadius = '8px';
-    img.onerror = () => generateFallbackQR(qrDiv, qrData);
-    qrDiv.appendChild(img);
-  } else {
-    // Fallback QR with basic info
-    const text = `Tien phat T${mo}/${y}: ${fmt(unpaid)}\nNhom: ${s.groupName||'Team'}`;
-    generateFallbackQR(qrDiv, text);
-    document.getElementById('bi-bank').textContent = '⚠️ Chưa cài đặt';
-    document.getElementById('bi-acc').textContent = 'Vào Cài đặt để thêm TK';
-  }
-}
-
-function generateFallbackQR(container, text) {
-  container.innerHTML = '';
-  try {
-    new QRCode(container, {
-      text: text || 'https://qr.me',
-      width: 130,
-      height: 130,
-      colorDark: '#1a1a2e',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-  } catch(e) {
-    container.innerHTML = '<div style="width:130px;height:130px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;color:#666;text-align:center;padding:8px">Cài đặt tài khoản để tạo QR</div>';
-  }
 }
 
 function downloadExport() {
@@ -579,7 +596,7 @@ function downloadExport() {
   html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
     const link = document.createElement('a');
     const sel = document.getElementById('export-month-select');
-    link.download = `bao-cao-phat-${sel.value}.png`;
+    link.download = `bao-cao-phat-${sel.value === 'all' ? 'tong-hop' : sel.value}.png`;
     link.href = canvas.toDataURL();
     link.click();
     toast('Đã tải xuống báo cáo!', 'success');
@@ -590,18 +607,16 @@ function downloadExport() {
 function loadSettings() {
   const s = state.settings;
   document.getElementById('setting-group').value = s.groupName || '';
-  document.getElementById('setting-bank').value = s.bank || 'VCB';
-  document.getElementById('setting-account').value = s.account || '';
-  document.getElementById('setting-accname').value = s.accName || '';
+  document.getElementById('setting-treasurer').value = s.treasurer || 'Hải Đăng';
+  document.getElementById('setting-zalopay').value = s.zalopay || '';
   document.getElementById('setting-content').value = s.content || '';
 }
 
 async function saveSettings() {
   const body = {
     groupName: document.getElementById('setting-group').value,
-    bank: document.getElementById('setting-bank').value,
-    account: document.getElementById('setting-account').value,
-    accName: document.getElementById('setting-accname').value,
+    treasurer: document.getElementById('setting-treasurer').value,
+    zalopay: document.getElementById('setting-zalopay').value,
     content: document.getElementById('setting-content').value,
   };
   try {
@@ -684,16 +699,24 @@ async function importFromLocalStorage() {
 
 // ─── MODALS ───────────────────────────────────
 function openModal(id) {
-  document.getElementById(id).classList.add('open');
+  const modal = document.getElementById(id);
+  modal.classList.add('open');
   if (id === 'fine-modal') {
     document.getElementById('fine-date').value = new Date().toISOString().split('T')[0];
     const sel = document.getElementById('fine-member');
     sel.innerHTML = '<option value="">-- Chọn thành viên --</option>' +
       state.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    document.getElementById('fine-amount-preview').textContent = '';
   }
   if (id === 'spending-modal') {
     document.getElementById('spend-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('spend-amount-preview').textContent = '';
   }
+  // Tự động focus ô nhập đầu tiên
+  setTimeout(() => {
+    const first = modal.querySelector('.modal-body .form-control');
+    if (first) first.focus();
+  }, 60);
 }
 
 function closeModal(id) {
@@ -702,6 +725,18 @@ function closeModal(id) {
 
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// Phím tắt: Esc để đóng, Enter để lưu (khi đang mở modal)
+document.addEventListener('keydown', e => {
+  const openEl = document.querySelector('.modal-overlay.open');
+  if (!openEl) return;
+  if (e.key === 'Escape') {
+    openEl.classList.remove('open');
+  } else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+    const submit = openEl.querySelector('.modal-footer .btn-primary');
+    if (submit) { e.preventDefault(); submit.click(); }
+  }
 });
 
 // ─── ADD FINE ─────────────────────────────────

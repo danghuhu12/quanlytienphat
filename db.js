@@ -37,12 +37,19 @@ db.exec(`
     bank      TEXT DEFAULT 'VCB',
     account   TEXT DEFAULT '',
     accName   TEXT DEFAULT '',
-    content   TEXT DEFAULT 'Dong tien phat nhom'
+    content   TEXT DEFAULT 'Dong tien phat nhom',
+    treasurer TEXT DEFAULT 'Hải Đăng',
+    zalopay   TEXT DEFAULT ''
   );
 `);
 
 // Luôn đảm bảo có 1 dòng settings
 db.prepare(`INSERT OR IGNORE INTO settings (id) VALUES (1)`).run();
+
+// Migration: thêm cột treasurer/zalopay cho DB tạo từ phiên bản trước
+const settingCols = db.prepare('PRAGMA table_info(settings)').all().map(c => c.name);
+if (!settingCols.includes('treasurer')) db.exec("ALTER TABLE settings ADD COLUMN treasurer TEXT DEFAULT 'Hải Đăng'");
+if (!settingCols.includes('zalopay')) db.exec("ALTER TABLE settings ADD COLUMN zalopay TEXT DEFAULT ''");
 
 // Seed dữ liệu demo lần đầu chạy (khi chưa có thành viên nào)
 const memberCount = db.prepare('SELECT COUNT(*) AS n FROM members').get().n;
